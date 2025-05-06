@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env
+.env.*
+
+# macOS and Linux
+.DS_Store
+
+# VS Code and IDEs
+.vscode/
+.idea/
+*.swp
+
+# Pytest and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# MyPy and Pylint
+.mypy_cache/
+.pylint.d/
+
+# Logs
+*.log
+
+# SQLite (if used)
+*.sqlite3
+
+# Docker
+*.pid
+*.db
+docker-compose.override.yml
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# System files
+Thumbs.db
+
