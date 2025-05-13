@@ -1,2 +1,2 @@
 --Commits formats--
-INDX-[service-name]-S-[sprint-number]-[commit-number]-[commit message]
+INDX-[service-name]-S[sprint-number]-[commit-number]: [commit message]

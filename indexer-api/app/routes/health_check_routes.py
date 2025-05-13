@@ -1,0 +1,30 @@
+from fastapi import APIRouter, Depends
+from app.controllers.health_check_controller import return_health_check_for_api, return_health_check_for_organization_db, return_health_check_for_b_plus_db
+from app.database.session import get_org_db, get_b_plus_db
+
+
+router = APIRouter()
+
+@router.get("/health_check_api", tags=["Health Check API"])
+async def health_check():
+    """
+    Health check endpoint to verify the status of the API.
+    Returns a JSON response with the status of the API.
+    """
+    return return_health_check_for_api()
+
+@router.get("/health_check_organization_db", tags=["Health Check Organization DB"])
+async def health_check_organization_db(db=Depends(get_org_db)):
+    """
+    Health check endpoint to verify the status of the organization database.
+    Returns a JSON response with the status of the database connection.
+    """
+    return return_health_check_for_organization_db(db)
+
+@router.get("/health_check_b_plus_db", tags=["Health Check B Plus Indexer DB"])
+async def health_check_b_plus_db(db=Depends(get_b_plus_db)):
+    """
+    Health check endpoint to verify the status of the indexer database.
+    Returns a JSON response with the status of the database connection.
+    """
+    return return_health_check_for_b_plus_db(db)
