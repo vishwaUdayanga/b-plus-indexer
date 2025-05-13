@@ -5,3 +5,8 @@ psycopg2-binary
 python-dotenv
 passlib[bcrypt]
 pydantic-settings
+bcrypt
+azure-identity
+azure-keyvault-secrets
+python-jose[cryptography]
+python-dotenv

@@ -6,7 +6,7 @@ from app.database.session import get_org_db, get_b_plus_db
 router = APIRouter()
 
 @router.get("/health_check_api", tags=["Health Check API"])
-async def health_check():
+async def health_check_api():
     """
     Health check endpoint to verify the status of the API.
     Returns a JSON response with the status of the API.
