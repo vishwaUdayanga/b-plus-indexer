@@ -30,7 +30,7 @@ def get_keyvault_secrets():
 
 def authenticate_dba(dba: LoginRequest) -> LoginResponse | HTTPException:
     """
-    Authenticate user using the provided credentials.
+    Authenticate dba using the provided credentials.
     """
     # Fetch secret from Azure Key Vault
     secret = get_keyvault_secrets()
