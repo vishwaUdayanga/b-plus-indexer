@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import health_check_routes, dba_routes
+from app.routes import health_check_routes, dba_routes, diagnostics_routes
 from app.database.base import Base
 from app.database.session import b_plus_engine
 from app.models import tc_query, query_log
@@ -19,3 +19,6 @@ app.include_router(health_check_routes.router)
 
 # Include the DBA routes
 app.include_router(dba_routes.router)
+
+# Include the diagnostics routes
+app.include_router(diagnostics_routes.router)
