@@ -2,8 +2,10 @@ from typing import Any, Dict, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.models.tc_query import TCQuery
+from app.models.query_log import QueryLog
 from sqlglot import parse_one, exp
 from sqlglot.expressions import Expression
+from app.schemas.diagnostics import TCQueryResponse, TCQueriesResponse
 
 # Utility functions to find time-consuming queries
 
@@ -353,7 +355,6 @@ def run_diagnostics(db_org: Session, db_b_plus: Session) -> List[TCQuery]:
         query_data['indexes'] = create_stmts
 
     # Save the time-consuming queries to the database if the query is not already in the tc_query table
-
     try:
         for query_data in time_consuming_queries:
             # Check if the query already exists in the tc_query table
@@ -372,14 +373,42 @@ def run_diagnostics(db_org: Session, db_b_plus: Session) -> List[TCQuery]:
                 )
                 # Add the new query to the session
                 db_b_plus.add(new_query)
+                db_b_plus.flush()
+                # Get the id of the inserted query and add it to the query data
+                query_data['id'] = new_query.id
+            else:
+                # If the query already exists, update its attributes
+                existing_query.total_exec_time = query_data['total_exec_time']
+                existing_query.mean_exec_time = query_data['mean_exec_time']
+                existing_query.calls = query_data['calls']
+                existing_query.shared_blks_read = query_data['shared_blks_read']
+                existing_query.temp_blks_written = query_data['temp_blks_written']
+                existing_query.score = query_data['score']
+                existing_query.indexes = query_data['indexes']
+                db_b_plus.flush()
+                # Get the id of the existing query and add it to the query data
+                query_data['id'] = existing_query.id
         # Commit the session to save the changes
         db_b_plus.commit()
-
-        return time_consuming_queries
     except Exception as e:
         # Rollback the session in case of an error
         db_b_plus.rollback()
-        raise ( f"Error saving time-consuming queries to the database: {e}")
+        raise Exception(f"Error saving time-consuming queries to the database: {e}")
+    
+    # Get the number of rows in the query_log table for each time-consuming query using the tc_query id and finally add the row count to the query data
+    for query_data in time_consuming_queries:
+        query_id = query_data['id']
+        # Get the number of rows in the query_log table for the current query
+        row_count = db_b_plus.query(QueryLog).filter(QueryLog.tc_query_id == query_id).count()
+        # Add the row count to the query data
+        query_data['rows'] = row_count
+
+    # Convert the time-consuming queries to TCQueryResponse objects
+    tc_query_responses = [TCQueryResponse(**query_data) for query_data in time_consuming_queries]
+    # Create a TCQueriesResponse object with the list of TCQueryResponse objects
+    tc_queries_response = TCQueriesResponse(queries=tc_query_responses)
+    # Return the TCQueriesResponse object
+    return tc_queries_response
 
 
     
