@@ -14,8 +14,8 @@ class TCQuery(Base):
     temp_blks_written = Column(Integer, nullable=False)
     score = Column(Float, nullable=False)
     indexes = Column(ARRAY(String), nullable=False)
-    estimated_time_for_indexes = Column(Float, nullable=False)
-    next_time_execution = Column(TIMESTAMP, nullable=False)
+    estimated_time_for_indexes = Column(Float, default=0.0)
+    next_time_execution = Column(TIMESTAMP, default=None)
     auto_indexing = Column(Boolean, default=False)
 
     # Defining the relationship with QueryLog

@@ -10,3 +10,4 @@ azure-identity
 azure-keyvault-secrets
 python-jose[cryptography]
 python-dotenv
+sqlglot
