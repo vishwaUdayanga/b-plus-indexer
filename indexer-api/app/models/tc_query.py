@@ -7,10 +7,15 @@ class TCQuery(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     query = Column(Text, nullable=False)
-    response_time = Column(Float, nullable=False)
+    total_exec_time = Column(Float, nullable=False)
+    mean_exec_time = Column(Float, nullable=False)
+    calls = Column(Integer, nullable=False)
+    shared_blks_read = Column(Integer, nullable=False)
+    temp_blks_written = Column(Integer, nullable=False)
+    score = Column(Float, nullable=False)
     indexes = Column(ARRAY(String), nullable=False)
-    estimated_time_for_indexes = Column(Float, nullable=False)
-    next_time_execution = Column(TIMESTAMP, nullable=False)
+    estimated_time_for_indexes = Column(Float, default=0.0)
+    next_time_execution = Column(TIMESTAMP, default=None)
     auto_indexing = Column(Boolean, default=False)
 
     # Defining the relationship with QueryLog
