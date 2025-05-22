@@ -3,6 +3,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import { getPort } from "get-port-please";
 import { startServer } from "next/dist/server/lib/start-server";
 import { join } from "path";
+import { initializeIpcStore } from "./ipc";
 
 const createWindow = () => {
   // Create the splash screen
@@ -83,7 +84,8 @@ const startNextJSServer = async () => {
   }
 };
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await initializeIpcStore();
   createWindow();
 
   ipcMain.on("ping", () => console.log("pong"));
