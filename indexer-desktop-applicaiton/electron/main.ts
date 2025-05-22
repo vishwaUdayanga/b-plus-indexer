@@ -5,9 +5,26 @@ import { startServer } from "next/dist/server/lib/start-server";
 import { join } from "path";
 
 const createWindow = () => {
+  // Create the splash screen
+  const splashWindow = new BrowserWindow({
+    width: 700,
+    height: 450,
+    frame: false,
+    transparent: false,
+    alwaysOnTop: true,
+  });
+
+  const splashPath = is.dev
+  ? join(__dirname, "splash.html")
+  : join(__dirname, "splash.html");
+
+  splashWindow.loadFile(splashPath);
+  
+  // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 1600,
+    height: 900,
+    show: false,
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       nodeIntegration: true,
@@ -15,6 +32,9 @@ const createWindow = () => {
   });
 
   mainWindow.on("ready-to-show", () => mainWindow.show());
+
+  // Remove menu bar
+  mainWindow.removeMenu();
 
   const loadURL = async () => {
     if (is.dev) {
@@ -31,6 +51,12 @@ const createWindow = () => {
   };
 
   loadURL();
+
+  // Wait until the main window is ready to show
+  mainWindow.webContents.on("did-finish-load", () => {
+    // Close the splash screen after the main window is ready
+    splashWindow.close();
+  });
   return mainWindow;
 };
 
