@@ -27,7 +27,7 @@ export default function APIPrompt() {
         };
         const response = await healthCheckWithDBs({ healthCheckRequest });
         if (response.success) {
-          router.push('/trainer');
+          router.push('/login');
         }
         setLoading(false);
       }
@@ -48,7 +48,7 @@ export default function APIPrompt() {
 
       if (response.success) {
         await setBaseUrl(baseUrl);
-        router.push('/trainer');
+        router.push('/login');
       } else {
         setError(response.message);
         setLoading(false);
