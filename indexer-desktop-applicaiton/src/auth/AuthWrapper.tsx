@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isTokenExpired } from "@/utils/toke";
+import { isTokenExpired } from "@/utils/token";
 import { RootState } from "@/app/store";
 import { useSelector } from "react-redux";
 
