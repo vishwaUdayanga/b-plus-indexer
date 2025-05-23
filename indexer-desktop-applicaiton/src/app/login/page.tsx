@@ -1,7 +1,7 @@
 'use client';
 
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,6 +11,7 @@ import { LoginRequest } from "@/api-calls/auth/login.type";
 import { login } from "@/api-calls/auth/login";
 import { useDispatch } from "react-redux";
 import { setDba } from "@/app-state/indexer_slice";
+import { LoginRequestSchema } from "@/schemas/zod/login";
 
 export default function Login() {
     const [username, setUsername] = useState("");
@@ -23,30 +24,39 @@ export default function Login() {
     const handleLogin = async () => {
         setLoading(true);
 
-        if (!username || !password) {
-            setError("Please enter both username and password");
-            setLoading(false);
-            return;
-        }
-
         const loginRequest: LoginRequest = {
             username,
             password,
         };
+
+        // Validate the login request using Zod schema
+        const validationResult = LoginRequestSchema.safeParse(loginRequest);
+        if (!validationResult.success) {
+            const errors = validationResult.error.flatten().fieldErrors;
+            if (errors.username) {
+                setError(errors.username[0]);
+            } else if (errors.password) {
+                setError(errors.password[0]);
+            } else {
+                setError("Validation error. Please check your input.");
+            }
+            setLoading(false);
+            return;
+        }
 
         try {
             const response = await login(loginRequest);
             // Get the data if returned and store in the redux store
             if (response) {
                 dispatch(setDba(response));
-                router.push("/trainer");
+                router.push("/dashboard");
             }
             // Handle the case where login fails
             else {
                 setError("Invalid username or password");
             }
         } catch (error) {
-            setError("Login failed. Please try again.");
+            setError(`Login failed. ${error}`);
         } finally {
             setLoading(false);
         }

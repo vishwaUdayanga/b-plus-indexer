@@ -10,6 +10,7 @@ import Button from '@/components/mini/buttons/form-buttons/button';
 import Link from 'next/link';
 import { healthCheckWithDBs } from '@/api-calls/health-check/health-check-api-with-dbs';
 import { HealthCheckRequest } from '@/api-calls/health-check/health-check-api-with-dbs.type';
+import { URLSchema } from '@/schemas/zod/api';
 
 export default function APIPrompt() {
   const router = useRouter();
@@ -25,6 +26,14 @@ export default function APIPrompt() {
         const healthCheckRequest: HealthCheckRequest = {
           url: url,
         };
+        // Validate the URL
+        const parsedUrl = URLSchema.safeParse(healthCheckRequest);
+        if (!parsedUrl.success) {
+          setError(parsedUrl.error.issues[0].message);
+          setLoading(false);
+          return;
+        }
+
         const response = await healthCheckWithDBs({ healthCheckRequest });
         if (response.success) {
           router.push('/login');
