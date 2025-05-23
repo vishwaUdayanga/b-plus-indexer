@@ -1,6 +1,6 @@
 export async function getBaseUrl(): Promise<string | null> {
   if (typeof window !== 'undefined' && window.electron) {
-    return await window.electron.ipcRenderer.invoke('get-base-url');
+    return await window.electron.ipcRenderer.invoke('get-base-url') as string | null;
   }
   return null;
 }

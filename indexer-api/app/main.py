@@ -4,6 +4,7 @@ from app.database.base import Base
 from app.database.session import b_plus_engine
 from app.models import tc_query, query_log
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create the database tables if they don't exist
 @asynccontextmanager
@@ -13,6 +14,19 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="Indexer API", version="1.0.0", lifespan=lifespan)
+
+# Add CORS middleware to allow requests from the frontend
+origins = [
+    "http://localhost:3000",  
+    "https://production-frontend.com",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include the health check routes
 app.include_router(health_check_routes.router)
