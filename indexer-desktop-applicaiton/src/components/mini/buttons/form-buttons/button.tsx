@@ -14,15 +14,17 @@ const Button: React.FC<ButtonProps> = ({
     buttonType,
     ...props
 }) => {
+    // Alert in electron
+    console.log(buttonType, text, loading, disabled);
     return (
         <button
             className={clsx(
-                "w-full flex items-center justify-center cursor-pointe p-2 mt-5 rounded-lg border border-transparent",
+                "w-full flex items-center justify-center cursor-pointe p-2 mt-5 rounded-lg",
                 {
                     'bg-black': buttonType == 'submit',
                     'bg-[#E54A3B]': buttonType == 'logout',
-                    'border-[#E54A3B]': buttonType == 'error',
-                    'border-[#3A72F8]': buttonType == 'info',
+                    'border-[#E54A3B] border': buttonType == 'error',
+                    'border-[#3A72F8] border': buttonType == 'info',
                     'opacity-70 cursor-default': loading,
                 })
             }
@@ -41,7 +43,7 @@ const Button: React.FC<ButtonProps> = ({
                     {icon && <span className="mr-2">{icon}</span>}
                     <span className={clsx(
                         {
-                            'text-white': buttonType == 'submit' || 'logout',
+                            'text-white': buttonType === 'submit' || buttonType === 'logout',
                             'text-[#E54A3B]': buttonType == 'error',
                             'text-[#3A72F8]': buttonType == 'info',
                         }

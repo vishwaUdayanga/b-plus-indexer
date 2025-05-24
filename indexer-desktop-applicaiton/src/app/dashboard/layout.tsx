@@ -14,7 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="w-5/6 h-full flex flex-col overflow-hidden">
                     <Header />
-                    <div className="flex-1 bg-[#F6F9FC] overflow-auto p-3">
+                    <div className="flex h-full bg-[#F6F9FC] overflow-auto p-3 items-center justify-center">
                         {children}
                     </div>
                 </div>

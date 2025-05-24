@@ -1,8 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { AccessToken } from '@/types/redux/states';
+import { AccessToken, TimeConsumingQueries } from '@/types/redux/states';
 
 interface InitialState {
     dba: AccessToken,
+    queries: TimeConsumingQueries[];
 }
 
 const initialState: InitialState = {
@@ -13,6 +14,7 @@ const initialState: InitialState = {
         refresh_token: '',
         scope: '',
     },
+    queries: [],
 };
 
 export const indexerSlice = createSlice({
@@ -25,9 +27,17 @@ export const indexerSlice = createSlice({
         clearDba: (state) => {
             state.dba = initialState.dba;
         },
+
+        setQueries: (state, action) => {
+            state.queries = action.payload;
+        },
+
+        clearQueries: (state) => {
+            state.queries = [];
+        },
     },
 });
 
-export const { setDba, clearDba } = indexerSlice.actions;
+export const { setDba, clearDba, setQueries, clearQueries } = indexerSlice.actions;
 
 export default indexerSlice.reducer;
