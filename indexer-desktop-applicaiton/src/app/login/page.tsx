@@ -93,6 +93,7 @@ export default function Login() {
                 text="Sign in"
                 loading={loading}
                 disabled={loading}
+                buttonType="submit"
                 onClick={handleLogin}
             />
             

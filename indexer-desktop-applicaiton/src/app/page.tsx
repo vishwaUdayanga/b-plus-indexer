@@ -92,6 +92,7 @@ export default function APIPrompt() {
         text="Locate the API"
         loading={loading}
         disabled={loading}
+        buttonType='submit'
         onClick={handleSubmit}
       />
       <p className='text-sm text-[#828282] mt-4'>By clicking this, an <span className='text-black'>health check</span> will be performed to continue operations. <Link href={'#'} style={{color: '#00897A'}}>Read more.</Link></p>

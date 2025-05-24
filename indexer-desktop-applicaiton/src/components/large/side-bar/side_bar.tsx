@@ -6,6 +6,12 @@ import { useState } from "react";
 import { SideBarManualList, SideBarMonitorList, SideBarTrainList } from './side-bar.type';
 import List from "@/components/mini/lists/side-bar-list/list";
 import MessageBox from "@/components/medium/message-box/message-box";
+import MessageBoxContent from "@/components/mini/message-box-content/message-box-content";
+import Link from "next/link";
+import Button from "@/components/mini/buttons/form-buttons/button";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { clearDba } from "@/app-state/indexer_slice";
 
 const SideBar:FC = () => {
     //State to track the navigation
@@ -14,15 +20,32 @@ const SideBar:FC = () => {
     //State to track the message box visibility
     const [messageBox, setMessageBox] = useState(false)
 
+    //State to track loading for the logout button
+    const [loading, setLoading] = useState(false)
+
     ///Method to change the currentTab
     const changeTab = ({tab}: {tab: string}) => {
         setCurrentTab(tab)
     }
 
+    const router = useRouter();
+    const dispatch = useDispatch();
+
     //Method to logout the user
     const logout = () => {
         //Logout the user
         setMessageBox(true)
+    }
+
+    //Method to handle the logout confirmation
+    const handleLogout = () => {
+        //Set loading to true
+        setLoading(true);
+        //Clear the user data from the redux store
+        dispatch(clearDba());
+
+        //Redirect to the login page
+        router.push("/login");
     }
 
     return (
@@ -90,9 +113,25 @@ const SideBar:FC = () => {
                     onClose: () => setMessageBox(false)
                 }}
             >
-                <div className="w-96 h-56 bg-white">
-                    <p>Message box</p>
-                </div>
+                <MessageBoxContent
+                    messageBoxContent={{
+                        title: "Logout",
+                        type: "error",
+                        icon: "logout",
+                        onCancel: () => setMessageBox(false)
+                    }}
+                >
+                    <p className="text-sm w-11/12">You are about to logout. Make sure your manual configurations and model outputs are saved in the database as desired. The session will not be saved after logout due to security concerns thus requires re <Link href={'#'} style={{color: '#00897A'}}>Read more.</Link></p>
+
+                    <Button
+                        text="Logout"
+                        loading={loading}
+                        disabled={loading}
+                        buttonType="logout"
+                        onClick={handleLogout}
+                    />
+
+                </MessageBoxContent>
             </MessageBox>
         </div>
     )

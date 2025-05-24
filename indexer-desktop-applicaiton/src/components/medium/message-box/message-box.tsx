@@ -13,7 +13,7 @@ export default function MessageBox({ messageBoxProps, children }: {messageBoxPro
     return (
         <>
             <div className="w-full h-full absolute top-0 left-0 backdrop-blur-sm bg-black/75 opacity-95" onClick={handleClose}></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/6">
                 {children}
             </div>
         </>
