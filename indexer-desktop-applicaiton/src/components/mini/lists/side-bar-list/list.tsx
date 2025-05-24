@@ -6,7 +6,7 @@ import clsx from "clsx";
 
 export default function List({ currentTab, title, icon, link, onClick }: ListProps) {
     return (
-        <li style={{transition: 'border 0.1s ease-in-out'}} className={clsx("w-full px-2 border-transparent border-l-black mt-3 ",
+        <li style={{transition: 'border 0.1s ease-in-out'}} className={clsx("w-full px-2 border-transparent border-l-black mt-1 ",
             {
                 "border-l-4": (currentTab === title)
             }

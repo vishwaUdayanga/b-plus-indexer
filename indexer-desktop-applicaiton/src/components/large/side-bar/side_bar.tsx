@@ -53,8 +53,8 @@ const SideBar:FC = () => {
             <h1 className="text-xl text-black mb-5 font-bold">B+ Indexer</h1>
             <div className="flex flex-col justify-between h-full">
                 <nav>
-                    <ul>
-                        <h1 className="text-base font-bold">Monitor</h1>
+                    <ul className="mt-6">
+                        <h1 className="text-base font-bold ml-5">Monitor</h1>
                         {SideBarMonitorList.map((item, index) => (
                             <List
                                 key={index}
@@ -66,8 +66,8 @@ const SideBar:FC = () => {
                             />
                         ))}
                     </ul>
-                    <ul>
-                        <h1 className="text-base">Train</h1>
+                    <ul className="mt-6">
+                        <h1 className="text-base font-bold ml-5">Train</h1>
                         {SideBarTrainList.map((item, index) => (
                             <List
                                 key={index}
@@ -79,8 +79,8 @@ const SideBar:FC = () => {
                             />
                         ))}
                     </ul>
-                    <ul>
-                        <h1 className="text-base">Manual</h1>
+                    <ul className="mt-6">
+                        <h1 className="text-base font-bold ml-5">Manual</h1>
                         {SideBarManualList.map((item, index) => (
                             <List
                                 key={index}
