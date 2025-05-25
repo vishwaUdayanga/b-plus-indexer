@@ -19,7 +19,7 @@ export default function TabMessageBox({
         <div className="w-2/5 flex items-center justify-center gap-2 flex-col text-center">
             <Image
                 src={`/logos/${icon}.png`}
-                alt={`${title} icon`}
+                alt={`Indexer|${title} icon`}
                 width={50}
                 height={50}
             />

@@ -100,7 +100,7 @@ const SideBar:FC = () => {
                                 src={`/logos/logout.png`}
                                 width={20}
                                 height={20}
-                                alt={`B+ Indexer|Logout|Logo`}
+                                alt={`Indexer|Logout|Logo`}
                             />
                             <p className="text-sm">Logout</p>
                         </div>

@@ -25,7 +25,7 @@ export default function List({ currentTab, title, icon, link, onClick }: ListPro
                         src={`/logos/${icon}.png`}
                         width={18}
                         height={18}
-                        alt={`B+ Indexer|${title}|Logo`}
+                        alt={`Indexer|${title}|Logo`}
                     />
                     <p className="text-sm">{title}</p>
                 </div>

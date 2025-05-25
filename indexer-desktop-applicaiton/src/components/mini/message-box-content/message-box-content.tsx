@@ -11,13 +11,13 @@ export default function MessageBoxContent({messageBoxContent, children}: {messag
             "p-4 rounded-lg shadow-md w-full border border-transparent bg-white",
             {
                 "border-l-[#E54A3B] border-l-8": type === "error",
-                "border-l-[#00897A]": type === "info",
+                "border-l-[#00897A] border-l-8": type === "info",
             })}>
                 <div className="flex items-center w-full justify-between mb-8">
                     <div className="flex items-center gap-3">
                         <Image
                             src={`/logos/${icon}.png`}
-                            alt={`${type} icon`}
+                            alt={`Indexer|${type} icon`}
                             width={20}
                             height={20}
                         />
@@ -26,7 +26,7 @@ export default function MessageBoxContent({messageBoxContent, children}: {messag
                     <div className="w-10 h-10 rounded-md flex items-center justify-center bg-[#EEEEEE] cursor-pointer" onClick={onCancel}>
                         <Image
                             src="/logos/close.png"
-                            alt="Close icon"
+                            alt="Indexer|Close icon"
                             width={10}
                             height={10}
                         />

@@ -7,7 +7,7 @@ import Header from "@/components/medium/header/header";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-row w-full h-screen relative">
+        <div className="flex flex-row w-full h-full relative">
             <AuthWrapper>
                 <div className="w-1/6 h-full overflow-hidden">
                     <SideBar />

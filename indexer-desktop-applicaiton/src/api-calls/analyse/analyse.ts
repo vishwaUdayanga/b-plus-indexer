@@ -1,5 +1,4 @@
 import { getBaseUrlFromElectron } from "../utils";
-import { TimeConsumingQueries } from "@/types/redux/states";
 import { TimeConsumingQueriesResponse } from "./analyse.type";
 
 export async function runDiagnostics({accessToken}: { accessToken: string }) {

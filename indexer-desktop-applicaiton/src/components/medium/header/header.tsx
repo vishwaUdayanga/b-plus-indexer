@@ -8,7 +8,7 @@ export default function Header() {
             <div className="flex items-center justify-between w-2/5 rounded-md bg-[#F6F9FC] p-2 gap-2">
                 <Image
                     src={'/logos/search.png'}
-                    alt="Search Icon"
+                    alt="Indexer|Search Icon"
                     width={24}
                     height={24}
                 />
@@ -28,7 +28,7 @@ export default function Header() {
                 <button className="w-9 h-9 ml-2 flex items-center justify-center bg-[#EEEEEE] rounded-md">
                     <Image
                         src={'/logos/settings.png'}
-                        alt="Settings Icon"
+                        alt="Indexer|Settings Icon"
                         width={15}
                         height={15}
                     />

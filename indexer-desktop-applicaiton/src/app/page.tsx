@@ -72,7 +72,7 @@ export default function APIPrompt() {
     <div className='flex flex-col items-center md:w-96 w-full text-center'>
       <Image 
         src="/logos/main.png"
-        alt="Logo"
+        alt="Indexer|Logo"
         width={100}
         height={100}
         className="mb-7"

@@ -1,7 +1,6 @@
 'use client'
 
-import { FC, useEffect, useState } from "react";
-import { TimeConsumingQueries } from "@/types/redux/states";
+import { FC, useEffect, useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { setQueries } from "@/app-state/indexer_slice";
 import TabLoading from "@/components/mini/loadings/tab-loading/tab-loading";
@@ -10,6 +9,7 @@ import TabMessageBox from "@/components/medium/tab-message-box/tab-message-box";
 import { TimeConsumingQueriesResponse } from "@/api-calls/analyse/analyse.type";
 import { RootState } from "@/app/store";
 import { useSelector } from "react-redux";
+import Analyse from "@/components/large/analyse/analyse";
 
 
 const Page:FC = () => {
@@ -23,7 +23,7 @@ const Page:FC = () => {
     const dispatch = useDispatch();
     const accessToken = useSelector((state: RootState) => state.indexer.dba.access_token);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const response = await getStatistics({accessToken: accessToken});
 
@@ -42,14 +42,18 @@ const Page:FC = () => {
         } catch {
             setFetchError(true);
         }
-    }
+    }, [accessToken, dispatch])
 
     //Fetch data on page load. Show tab message box if the response is an empty array.
     useEffect(() => {
-        setLoading(true);
-        fetchData()
-        setLoading(false);
-    }, [dispatch]);
+        const callFetch = async () => {
+            setLoading(true);
+            await fetchData();
+            setLoading(false);
+        };
+
+        callFetch();
+    }, [fetchData]);
 
     // Handle diagnostics info
     const handleDiagnosticsInfo = () => {
@@ -76,11 +80,16 @@ const Page:FC = () => {
     }
 
     // Handle error 
-    const handleError = () => {
+    const handleError = async () => {
         setButtonLoading(true);
-        fetchData();
-        setButtonLoading(false);
-    };
+        try {
+            await fetchData();
+        } catch {
+            setFetchError(true);
+        } finally {
+            setButtonLoading(false);
+        }
+    }
 
     if (diagnosticsInfo) {
         return (
@@ -121,21 +130,13 @@ const Page:FC = () => {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center w-full h-full">
-            <h1 className="text-2xl font-bold mb-4">Time Consuming Queries</h1>
-            {data && data.queries.length > 0 ? (
-                <ul className="w-full max-w-2xl">
-                    {data.queries.map((query, index) => (
-                        <li key={index} className="p-4 border-b border-gray-200">
-                            <p><strong>Query:</strong> {query.query}</p>
-                            <p><strong>Execution Time:</strong> {query.indexes} ms</p>
-                        </li>
-                    ))}
-                </ul>
+        <>
+            {data && data.queries && data.queries.length > 0 ? (
+                <Analyse data={data} />
             ) : (
-                <p>No time consuming queries found.</p>
+                <TabLoading />
             )}
-        </div>
+        </>
     )
 }
 
