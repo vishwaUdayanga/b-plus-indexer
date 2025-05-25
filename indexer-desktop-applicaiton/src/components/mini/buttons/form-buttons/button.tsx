@@ -12,12 +12,18 @@ const Button: React.FC<ButtonProps> = ({
     loading,
     disabled,
     buttonType,
+    onClick,
     ...props
 }) => {
-    // Alert in electron
-    console.log(buttonType, text, loading, disabled);
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key === 'Enter' && onClick) {
+            onClick();
+        }
+    }
     return (
         <button
+            onClick={onClick}
+            onKeyDown={handleKeyDown}
             className={clsx(
                 "w-full flex items-center justify-center cursor-pointe p-2 mt-5 rounded-lg",
                 {
@@ -29,6 +35,7 @@ const Button: React.FC<ButtonProps> = ({
                 })
             }
             disabled={disabled || loading}
+
             {...props}
         >
             {loading ? (
