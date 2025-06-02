@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class TCQueryResponse(BaseModel):
@@ -12,7 +12,9 @@ class TCQueryResponse(BaseModel):
     temp_blks_written: int
     score: float
     indexes: List[str]
-    rows: int
+    estimated_time_for_indexes: Optional[float] = None
+    next_time_execution: Optional[float] = None
+    auto_indexing: Optional[bool] = None
 
     class Config:
         from_attributes = True

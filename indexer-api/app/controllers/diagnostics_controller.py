@@ -319,7 +319,7 @@ def find_best_indexes(query: str, db: Session) -> List[str]:
     return create_stmts
 
 # Entry point function to run diagnostics
-def run_diagnostics(db_org: Session, db_b_plus: Session) -> List[TCQuery]:
+def run_diagnostics(db_org: Session, db_b_plus: Session) -> List[TCQueriesResponse]:
     """
     Analyze time-consuming queries and return a list of TCQuery objects.
     This function retrieves the time-consuming queries from the database,
@@ -341,74 +341,66 @@ def run_diagnostics(db_org: Session, db_b_plus: Session) -> List[TCQuery]:
     # Convert rows to a list of dictionaries
     data = [dict(zip(columns, row)) for row in rows]
 
-    if not data:
-        return []
+    if data:
     
-    time_consuming_queries = find_time_consuming_queries(data)
+        time_consuming_queries = find_time_consuming_queries(data)
 
-    # Iterate over the time-consuming queries to find the best indexes
-    for query_data in time_consuming_queries:
-        query = query_data['query']
-        # Find the best indexes for the current query
-        create_stmts = find_best_indexes(query, db_org)
-        # Add the create statements to the query data
-        query_data['indexes'] = create_stmts
-
-    # Save the time-consuming queries to the database if the query is not already in the tc_query table
-    try:
+        # Iterate over the time-consuming queries to find the best indexes
         for query_data in time_consuming_queries:
-            # Check if the query already exists in the tc_query table
-            existing_query = db_b_plus.query(TCQuery).filter(TCQuery.query == query_data['query']).first()
-            if not existing_query:
-                # Create a new TCQuery object
-                new_query = TCQuery(
-                    query=query_data['query'],
-                    total_exec_time=query_data['total_exec_time'],
-                    mean_exec_time=query_data['mean_exec_time'],
-                    calls=query_data['calls'],
-                    shared_blks_read=query_data['shared_blks_read'],
-                    temp_blks_written=query_data['temp_blks_written'],
-                    score=query_data['score'],
-                    indexes=query_data['indexes']
-                )
-                # Add the new query to the session
-                db_b_plus.add(new_query)
-                db_b_plus.flush()
-                # Get the id of the inserted query and add it to the query data
-                query_data['id'] = new_query.id
-            else:
-                # If the query already exists, update its attributes
-                existing_query.total_exec_time = query_data['total_exec_time']
-                existing_query.mean_exec_time = query_data['mean_exec_time']
-                existing_query.calls = query_data['calls']
-                existing_query.shared_blks_read = query_data['shared_blks_read']
-                existing_query.temp_blks_written = query_data['temp_blks_written']
-                existing_query.score = query_data['score']
-                existing_query.indexes = query_data['indexes']
-                db_b_plus.flush()
-                # Get the id of the existing query and add it to the query data
-                query_data['id'] = existing_query.id
-        # Commit the session to save the changes
-        db_b_plus.commit()
-    except Exception as e:
-        # Rollback the session in case of an error
-        db_b_plus.rollback()
-        raise Exception(f"Error saving time-consuming queries to the database: {e}")
-    
-    # Get the number of rows in the query_log table for each time-consuming query using the tc_query id and finally add the row count to the query data
-    for query_data in time_consuming_queries:
-        query_id = query_data['id']
-        # Get the number of rows in the query_log table for the current query
-        row_count = db_b_plus.query(QueryLog).filter(QueryLog.tc_query_id == query_id).count()
-        # Add the row count to the query data
-        query_data['rows'] = row_count
+            query = query_data['query']
+            # Find the best indexes for the current query
+            create_stmts = find_best_indexes(query, db_org)
+            # Add the create statements to the query data
+            query_data['indexes'] = create_stmts
 
-    # Convert the time-consuming queries to TCQueryResponse objects
-    tc_query_responses = [TCQueryResponse(**query_data) for query_data in time_consuming_queries]
-    # Create a TCQueriesResponse object with the list of TCQueryResponse objects
-    tc_queries_response = TCQueriesResponse(queries=tc_query_responses)
-    # Return the TCQueriesResponse object
-    return tc_queries_response
+        # Save the time-consuming queries to the database if the query is not already in the tc_query table
+        try:
+            for query_data in time_consuming_queries:
+                # Check if the query already exists in the tc_query table
+                existing_query = db_b_plus.query(TCQuery).filter(TCQuery.query == query_data['query']).first()
+                if not existing_query:
+                    # Create a new TCQuery object
+                    new_query = TCQuery(
+                        query=query_data['query'],
+                        total_exec_time=query_data['total_exec_time'],
+                        mean_exec_time=query_data['mean_exec_time'],
+                        calls=query_data['calls'],
+                        shared_blks_read=query_data['shared_blks_read'],
+                        temp_blks_written=query_data['temp_blks_written'],
+                        score=query_data['score'],
+                        indexes=query_data['indexes']
+                    )
+                    # Add the new query to the session
+                    db_b_plus.add(new_query)
+                    db_b_plus.flush()
+                else:
+                    # If the query already exists, update its attributes
+                    existing_query.total_exec_time = query_data['total_exec_time']
+                    existing_query.mean_exec_time = query_data['mean_exec_time']
+                    existing_query.calls = query_data['calls']
+                    existing_query.shared_blks_read = query_data['shared_blks_read']
+                    existing_query.temp_blks_written = query_data['temp_blks_written']
+                    existing_query.score = query_data['score']
+                    existing_query.indexes = query_data['indexes']
+
+                    db_b_plus.flush()
+            # Commit the session to save the changes
+            db_b_plus.commit()
+        except Exception as e:
+            # Rollback the session in case of an error
+            db_b_plus.rollback()
+            raise Exception(f"Error saving time-consuming queries to the database: {e}")
+    
+    # Fetch all TCQuery objects from the database
+    queries = db_b_plus.query(TCQuery).all()
+    if queries:
+        # Convert the list of TCQuery objects to a list of TCQueryResponse objects
+        tc_query_responses = [TCQueryResponse.model_validate(query) for query in queries]
+        return TCQueriesResponse(queries=tc_query_responses)
+    
+    return []
+
+
 
 
     
