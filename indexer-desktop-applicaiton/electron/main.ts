@@ -16,8 +16,8 @@ const createWindow = () => {
   });
 
   const splashPath = is.dev
-  ? join(__dirname, "splash.html")
-  : join(__dirname, "splash.html");
+  ? join(__dirname, "..", "public", "splash", "splash.html")
+  : join(app.getAppPath(), "app", "public", "splash", "splash.html");
 
   splashWindow.loadFile(splashPath);
   

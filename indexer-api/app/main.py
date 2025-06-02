@@ -16,13 +16,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Indexer API", version="1.0.0", lifespan=lifespan)
 
 # Add CORS middleware to allow requests from the frontend
-origins = [
-    "http://localhost:3000",  
-    "https://production-frontend.com",
-]
+# origins = [
+#     "http://localhost:3000",  
+#     "https://production-frontend.com",
+# ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Allow all origins for development; adjust for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
