@@ -2,7 +2,6 @@ from typing import Any, Dict, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.models.tc_query import TCQuery
-from app.models.query_log import QueryLog
 from sqlglot import parse_one, exp
 from sqlglot.expressions import Expression
 from app.schemas.diagnostics import TCQueryResponse, TCQueriesResponse

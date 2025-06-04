@@ -11,3 +11,7 @@ azure-keyvault-secrets
 python-jose[cryptography]
 python-dotenv
 sqlglot
+numpy 
+pandas 
+tensorflow 
+scikit-learn
