@@ -9,8 +9,9 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
 import pickle
-from FastAPI import HTTPException
+from fastapi import HTTPException
 
 def create_dataset(deltas: List[float], sin_hour: List[float], cos_hour: List[float], sin_weekday: List[float], cos_weekday: List[float], window_size: int)-> Tuple[np.ndarray, np.ndarray]:
     """
@@ -38,14 +39,14 @@ def get_training_data_from_file(file: Any) -> pd.DataFrame:
         raise HTTPException(status_code=400, detail="Training data file is required when using_files is True")
     
     try:
-        df = pd.read_csv(file, parse_dates=['executed_at'])
+        df = pd.read_csv(file.file, parse_dates=['executed_at'])
         if df.empty:
             raise HTTPException(status_code=400, detail="Training data file is empty")
         
         df.sort_values('executed_at', inplace=True)
 
         # Convert time stamps to unix time (seconds)
-        df['unix_time'] = df['executed_at'].astype(np.int64) // 10**9
+        df['unix_time'] = df['executed_at'].view('int64') // 10**9
 
         # Compute inter-arrival times (deltas) between consecutive executions
         df['delta'] = df['unix_time'].diff()
@@ -109,7 +110,7 @@ def train_the_model(
     epochs: int,
     batch_size: int,
     validation_split: float
-) -> Tuple[float, Dict[str, Any]]:
+) -> Tuple[float, float, keras.callbacks.History]:
     """
     This function trains the model using the provided parameters and returns the RMSE and training history.
     """
@@ -127,8 +128,14 @@ def train_the_model(
     # Calculate RMSE
     y_pred = model.predict(X_scaled)
     rmse = np.sqrt(np.mean((y_pred.flatten() - y_scaled) ** 2))
+
+    # Calculate R^2 score
+    r2 = r2_score(y_scaled, y_pred.flatten())
+    # Percentage value to return
+    r2_percentage = r2 * 100
+
     
-    return rmse, history
+    return rmse, r2_percentage, history
 
 def store_model_in_db(
     db: Session,
@@ -142,7 +149,8 @@ def store_model_in_db(
     validation_split: float,
     scaler_x: StandardScaler,
     scaler_y: StandardScaler,
-    rmse: float
+    rmse: float,
+    r2_score: float
 ) -> None:
     """
     This function stores the trained model, hyperparameters, and RMSE in the database.
@@ -163,7 +171,8 @@ def store_model_in_db(
             model_data=model_bytes,
             scaler_x=pickle.dumps(scaler_x),
             scaler_y=pickle.dumps(scaler_y),
-            rmse=rmse
+            rmse=rmse,
+            r2_percentage=r2_score
         )
         
         # Add and commit the new model to the database
@@ -195,10 +204,8 @@ def train_model(
     if using_files:
         df = get_training_data_from_file(training_data)
     else:
-        # If not using files, fetch the data from the database
-        df = db.query(TrainedModel).filter(TrainedModel.tc_query_id == query_id).first()
-        if not df:
-            raise HTTPException(status_code=404, detail="No training data found for the specified query ID")
+        # This exception is raised as an example. This should be replaced with actual logic to fetch training data from the database.
+        raise HTTPException(status_code=404, detail="Cannot train model without training data file when using_files is False")
     
     # Create dataset
     window_size = 10  # Example window size, can be adjusted
@@ -218,7 +225,7 @@ def train_model(
     model = model_definition(number_of_hidden_layers, number_of_neurons_per_layer, X_scaled)
     
     # Train the model
-    rmse, history = train_the_model(
+    rmse, r2_percentage, history = train_the_model(
         model,
         X_scaled,
         y_scaled,
@@ -241,8 +248,12 @@ def train_model(
         validation_split,
         scaler_x,
         scaler_y,
-        rmse
+        float(rmse),
+        float(r2_percentage)
     )
     
-    return ModelTrainingResponse(rmse=rmse)
+    return ModelTrainingResponse(
+        rmse=float(rmse),
+        r2_score=float(r2_percentage)
+    )
 

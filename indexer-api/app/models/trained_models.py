@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, TIMESTAMP, LargeBinary, ForeignKey
+from sqlalchemy import Column, Integer, Float, TIMESTAMP, LargeBinary, ForeignKey, func
 from sqlalchemy.orm import relationship
 from app.database.base import Base
 
@@ -17,7 +17,8 @@ class TrainedModel(Base):
     scaler_x = Column(LargeBinary, nullable=False)
     scaler_y = Column(LargeBinary, nullable=False)
     rmse = Column(Float, nullable=False)
-    created_at = Column(TIMESTAMP, nullable=False, server_default="CURRENT_TIMESTAMP")
+    r2_percentage = Column(Float, nullable=False)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
 
     # Defining the relationship with TCQuery
     tc_query = relationship("TCQuery", back_populates="trained_models")
