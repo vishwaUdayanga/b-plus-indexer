@@ -6,7 +6,7 @@ from app.middleware.auth import auth_wrapper
 
 router = APIRouter()
 
-@router.get("/health_check_api", tags=["Health Check API"])
+@router.get("/health_check_api", tags=["Health Checks"])
 async def health_check_api():
     """
     Health check endpoint to verify the status of the API.
@@ -14,7 +14,7 @@ async def health_check_api():
     """
     return return_health_check_for_api()
 
-@router.get("/health_check_organization_db", tags=["Health Check Organization DB"])
+@router.get("/health_check_organization_db", tags=["Health Checks"])
 async def health_check_organization_db(db=Depends(get_org_db)):
     """
     Health check endpoint to verify the status of the organization database.
@@ -22,7 +22,7 @@ async def health_check_organization_db(db=Depends(get_org_db)):
     """
     return return_health_check_for_organization_db(db)
 
-@router.get("/health_check_b_plus_db", tags=["Health Check B Plus Indexer DB"])
+@router.get("/health_check_b_plus_db", tags=["Health Checks"])
 async def health_check_b_plus_db(db=Depends(get_b_plus_db)):
     """
     Health check endpoint to verify the status of the indexer database.
@@ -30,7 +30,7 @@ async def health_check_b_plus_db(db=Depends(get_b_plus_db)):
     """
     return return_health_check_for_b_plus_db(db)
 
-@router.get("/health_check_token_verification", tags=["Health Check Token Verification"], dependencies=[Depends(auth_wrapper)])
+@router.get("/health_check_token_verification", tags=["Health Checks"], dependencies=[Depends(auth_wrapper)])
 async def health_check_token_verification():
     """
     Health check endpoint to verify the status of the token verification.

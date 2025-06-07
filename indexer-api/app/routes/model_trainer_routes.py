@@ -1,12 +1,27 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form
-from app.controllers.model_trainer_controller import train_model
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
+from app.controllers.model_trainer_controller import train_model, get_latest_trained_model_attributes
 from app.database.session import get_b_plus_db
 from app.middleware.auth import auth_wrapper
-from app.schemas.model_trainer import ModelTrainingResponse
+from app.schemas.model_trainer import ModelTrainingResponse, ModelTrainingRequestForFetchAttributes, ModelTrainingResponseForFetchAttributes
 
 router = APIRouter()
 
-# Here we could not use pydantic model since we need to handle file uploads and form data
+# Check the dependency between using_files and training_data
+def validate_training_data(using_files: bool, training_data: UploadFile | None):
+    if not using_files:
+        raise HTTPException(
+            status_code=400,
+            detail="The system still does not support fetching training data from the database."
+        )
+
+    if using_files and not training_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Training data file is required when using_files is True"
+        )
+    
+
+# Here we could not use pydantic model since we need to handle file uploads. Hence the other attributes were also taken as form data for simplicity. 
 @router.post("/train_model", response_model=ModelTrainingResponse, tags=["Model Training"], dependencies=[Depends(auth_wrapper)])
 async def train_model_endpoint(
     db=Depends(get_b_plus_db),
@@ -24,6 +39,10 @@ async def train_model_endpoint(
     Endpoint to train a dedicated model for a specific time-consuming query.
     Returns the RMSE of the trained model.
     """
+
+    # Validate the training data based on the using_files flag
+    validate_training_data(using_files, training_data)
+
     return train_model(
         db=db,
         query_id=query_id,
@@ -33,8 +52,21 @@ async def train_model_endpoint(
         epochs=epochs,
         batch_size=batch_size,
         validation_split=validation_split,
-        using_files=using_files,
-        training_data=training_data if using_files else None
+        training_data=training_data
     )
+
+# This endpoint is used to get the existing model attributes for a specific query ID.
+@router.post("/fetch_model_attributes", response_model=ModelTrainingResponseForFetchAttributes, tags=["Model Training"], dependencies=[Depends(auth_wrapper)])
+async def fetch_model_attributes_endpoint(
+    request: ModelTrainingRequestForFetchAttributes,
+    db=Depends(get_b_plus_db)
+):
+    """
+    Endpoint to fetch existing model attributes for a specific query ID.
+    Returns the model attributes including number of hidden layers, neurons per layer, etc.
+    """
+    return get_latest_trained_model_attributes(db=db, query_id=request.query_id)
+
+
 
 

@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Tuple
 from sqlalchemy.orm import Session
-from app.schemas.model_trainer import ModelTrainingResponse
+from app.schemas.model_trainer import ModelTrainingResponse, ModelTrainingResponseForFetchAttributes
 from app.models.trained_models import TrainedModel
 import numpy as np
 import pandas as pd
@@ -191,21 +191,16 @@ def train_model(
     epochs: int,
     batch_size: int,
     validation_split: float,
-    using_files: bool = False,
     training_data: Any = None
 
 ) -> ModelTrainingResponse:
     """
     This function is used to train a dedicated model for a specific time consuming query using
     the provided parameters. It will train the model, store the model outputs, hyperparameters, and RMSE in the database, and 
-    return the RMSE of the trained model. The utility functions have been defined above.
+    return the RMSE and  r2_score of the trained model. The utility functions have been defined above.
     """
     # Fetch the training data
-    if using_files:
-        df = get_training_data_from_file(training_data)
-    else:
-        # This exception is raised as an example. This should be replaced with actual logic to fetch training data from the database.
-        raise HTTPException(status_code=404, detail="Cannot train model without training data file when using_files is False")
+    df = get_training_data_from_file(training_data)
     
     # Create dataset
     window_size = 10  # Example window size, can be adjusted
@@ -256,4 +251,29 @@ def train_model(
         rmse=float(rmse),
         r2_score=float(r2_percentage)
     )
+
+# Entry point function to get the latest trained model attributes for a specific query 
+def get_latest_trained_model_attributes(db: Session, query_id: int) -> ModelTrainingResponseForFetchAttributes:
+    """
+    This function fetches the latest trained model attributes for a specific query from the database.
+    """
+    try:
+        # Query the latest trained model for the given query_id
+        trained_model = db.query(TrainedModel).filter(TrainedModel.tc_query_id == query_id).order_by(TrainedModel.created_at.desc()).first()
+        
+        if not trained_model:
+            raise HTTPException(status_code=404, detail="No trained model found for the given query ID")
+        
+        return ModelTrainingResponseForFetchAttributes(
+            number_of_hidden_layers=trained_model.number_of_hidden_layers,
+            number_of_neurons_per_layer=trained_model.number_of_neurons_per_layer,
+            early_stopping_patience=trained_model.early_stopping_patience,
+            epochs=trained_model.epochs,
+            batch_size=trained_model.batch_size,
+            validation_split=trained_model.validation_split,
+            rmse=trained_model.rmse,
+            r2_percentage=trained_model.r2_percentage
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching trained model attributes: {str(e)}")
 
