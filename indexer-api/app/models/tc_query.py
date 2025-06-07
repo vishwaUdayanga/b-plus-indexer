@@ -21,5 +21,8 @@ class TCQuery(Base):
     # Defining the relationship with QueryLog
     query_logs = relationship("QueryLog", back_populates="tc_query")
 
+    # Defining the relationship with TrainedModel
+    trained_models = relationship("TrainedModel", back_populates="tc_query")
+
 
 
