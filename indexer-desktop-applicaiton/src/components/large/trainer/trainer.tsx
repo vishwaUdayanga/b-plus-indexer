@@ -8,7 +8,7 @@ export default function Trainer({ data }: {data: TimeConsumingQueries[]}) {
 
     // Redirect to the query details page when a row is clicked
     const handleRowClick = (id: number) => {
-        router.push(`/dashboard/hits`);
+        router.push(`/dashboard/train-model/${id}`);
     };
 
 
