@@ -1,26 +1,27 @@
 import { TrainedModelParameters, TrainedResults, FormDataForTraining } from "./trainer.type";
 import { getBaseUrlFromElectron } from "../utils";
 
-export async function getTrainedModelParameters({ accessToken }: { accessToken: string }) {
+export async function getTrainedModelParameters({ accessToken, query_id }: { accessToken: string, query_id: number }) {
     const baseUrl = await getBaseUrlFromElectron();
+    // Post request to fetch trained model parameters
     const response = await fetch(`${baseUrl}/fetch_model_attributes`, {
-        method: 'GET',
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ query_id })
     });
+
 
     if (!response.ok) {
         throw new Error('Failed to fetch trained model parameters');
     }
 
     const data = await response.json();
-
     if (Array.isArray(data)) {
-        return [];
+        return null; 
     }
-
     return data as TrainedModelParameters;
 }
 
