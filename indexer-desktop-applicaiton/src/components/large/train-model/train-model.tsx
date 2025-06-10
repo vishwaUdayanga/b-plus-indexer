@@ -2,13 +2,20 @@
 
 import { TrainModelParams } from "./train-model.type";
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TrainModelForm from "@/components/medium/train-model-form/train-model-form";
 import { TrainedModelParameters } from "@/api-calls/trainer/trainer.type";
 import RecentParameters from "@/components/medium/recent-model-params/recent-parameters";
 
 export default function TrainModel({params}: {params: TrainModelParams}) {
     const [recentParameters, setRecentParameters] = useState<TrainedModelParameters | null>(params.parameters || null);
+
+    useEffect(() => {
+        if (params.parameters) {
+            setRecentParameters(params.parameters);
+        }
+    }
+    , [params.parameters]);
 
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
@@ -30,7 +37,7 @@ export default function TrainModel({params}: {params: TrainModelParams}) {
                 </div>
                 <div className="bg-white rounded h-fit p-4 w-3/5 flex justify-center">
                     <RecentParameters
-                        data={params.parameters || null}
+                        data={recentParameters}
                         isLoading={params.isLoading}
                     />
                 </div>

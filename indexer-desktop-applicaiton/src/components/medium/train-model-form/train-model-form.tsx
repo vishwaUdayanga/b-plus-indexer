@@ -23,7 +23,7 @@ export default function TrainModelForm({
 }: {
     queryId: number;
     params: Omit<TrainedModelParametersValidated, 'using_files' | 'training_data'>;
-    setRecentParameters?: (params: TrainedModelParameters) => void;
+    setRecentParameters: (params: TrainedModelParameters) => void;
 }) {
     const accessToken = useSelector((state: RootState) => state.indexer.dba.access_token);
 
@@ -77,14 +77,20 @@ export default function TrainModelForm({
                 // Explicitly type response as TrainedResults
                 const trainedResponse = response as import("@/api-calls/trainer/trainer.type").TrainedResults;
                 if (trainedResponse) {
+                    console.log("Model trained successfully:", trainedResponse);
                     // The response only contains rmse and r2_percentage
                     const trainedParams: TrainedModelParameters = {
-                        ...formData,
+                        number_of_hidden_layers: data.number_of_hidden_layers,
+                        number_of_neurons_per_layer: data.number_of_neurons_per_layer,
+                        early_stopping_patience: data.early_stopping_patience,
+                        epochs: data.epochs,
+                        batch_size: data.batch_size,
+                        validation_split: data.validation_split,
                         rmse: trainedResponse.rmse,
-                        r2_percentage: trainedResponse.r2_percentage,
+                        r2_percentage: trainedResponse.r2_score,
                         created_at: new Date().toISOString(), // Assuming current time as created_at
                     };
-                    setRecentParameters?.(trainedParams);
+                    setRecentParameters(trainedParams);
                     reset();
                 }
             })

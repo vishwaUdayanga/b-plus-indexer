@@ -55,13 +55,6 @@ export async function trainModel(formData: FormDataForTraining) {
         formDataObj.append("training_data", training_data);
     }
 
-    // Logging the formData for debugging purposes
-    for (const [key, value] of formDataObj.entries()) {
-        console.log(`FormData - ${key}:`, value);
-    }
-    console.log("training_data instanceof File", training_data instanceof File);
-
-
     const response = await fetch(`${baseUrl}/train_model`, {
         method: "POST",
         headers: {

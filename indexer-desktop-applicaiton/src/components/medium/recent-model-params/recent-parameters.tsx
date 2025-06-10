@@ -17,7 +17,6 @@ export default function RecentParameters({data, isLoading}: {data: TrainedModelP
             url="#"
         />;
     }
-    console.log(data.created_at)
 
     return (
         <div className="w-full">

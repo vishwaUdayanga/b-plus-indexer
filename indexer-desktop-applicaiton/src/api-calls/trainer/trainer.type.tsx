@@ -12,7 +12,7 @@ export type TrainedModelParameters = {
 
 export type TrainedResults = {
     rmse: number;
-    r2_percentage: number;
+    r2_score: number;
 }
 
 export type FormDataForTraining = {
