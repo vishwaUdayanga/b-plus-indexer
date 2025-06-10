@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { TrainModelParams } from "./train-model.type";
 import React from "react";
 import TrainModelForm from "@/components/medium/train-model-form/train-model-form";

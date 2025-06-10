@@ -15,7 +15,7 @@ export async function getTrainedModelParameters({ accessToken, query_id }: { acc
 
 
     if (!response.ok) {
-        throw new Error('Failed to fetch trained model parameters');
+        return null
     }
 
     const data = await response.json();

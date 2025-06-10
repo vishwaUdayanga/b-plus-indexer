@@ -3,7 +3,7 @@ import { TextFieldProps } from './text-field.type';
 
 const TextField: React.FC<TextFieldProps> = ({ placeholder, type, error, ...props }) => {
   return (
-    <div className="flex flex-col w-full text-left mt-5">
+    <div className="flex flex-col w-full text-left">
       <input
         type={type}
         placeholder={placeholder}

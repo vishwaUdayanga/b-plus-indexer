@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getBaseUrl, setBaseUrl } from '@/lib/electron/base-url';
 import Image from 'next/image';
-import Input from '@/components/mini/text-fields/input';
+import Input from '@/components/mini/form-inputs/input';
 import Button from '@/components/mini/buttons/form-buttons/button';
 import Link from 'next/link';
 import { healthCheckWithDBs } from '@/api-calls/health-check/health-check-api-with-dbs';

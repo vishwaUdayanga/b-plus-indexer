@@ -6,7 +6,8 @@ import { ModelTrainingSchema } from "@/schemas/zod/model-train-form";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from "react-hook-form";
 import Button from "@/components/mini/buttons/form-buttons/button";
-import TextField from "@/components/mini/text-fields/text-field";
+import TextField from "@/components/mini/form-inputs/text-field";
+import FileUpload from "@/components/mini/form-inputs/file-upload";
 
 type TrainedModelParameters = z.infer<typeof ModelTrainingSchema>;
 
@@ -29,8 +30,8 @@ export default function TrainModelForm({
         resolver: zodResolver(ModelTrainingSchema),
         defaultValues: {
             ...params,
-            using_files: false,
-            training_data: null,
+            using_files: true,
+            training_data: undefined,
         },
     });
 
@@ -38,8 +39,8 @@ export default function TrainModelForm({
     useEffect(() => {
         reset({
             ...params,
-            using_files: false,
-            training_data: null,
+            using_files: true,
+            training_data: undefined,
         });
     }, [params, reset]);
 
@@ -50,41 +51,36 @@ export default function TrainModelForm({
         console.log('Final submitted values:', data);
     };
 
+    const onFileDrop = (files: FileList) => {
+        setValue("training_data", Array.from(files), { shouldValidate: true });
+    };
+
     return (
         <div className="w-full">
-            <h1>Configure model parameters</h1>
+            <h1 className="font-bold mb-5">Configure model parameters</h1>
             <form className="w-full">
-                <div className="flex gap-2">
-                    <label>Using files</label>
-                    <label className="flex items-center gap-1">
+                <div className="flex gap-2 items-center">
+                    <label className="text-sm font-bold">Using files</label>
                     <input
-                        type="radio"
-                        value="true"
+                        type="checkbox"
+                        className="h-5 w-5 text-[#00897A] accent-[#00897A] cursor-pointer"
                         {...register('using_files')}
-                        onChange={() => setValue('using_files', true)}
+                        onChange={(e) => setValue('using_files', e.target.checked)}
                     />
-                    Yes
-                    </label>
-                    <label className="flex items-center gap-1">
-                    <input
-                        type="radio"
-                        value="false"
-                        {...register('using_files')}
-                        onChange={() => setValue('using_files', false)}
-                    />
-                    No
-                    </label>
                 </div>
 
                 {usingFiles && (
-                    <div className="w-full">
-                        <label className="block mb-1">Upload Training Data</label>
-                        <input type="file" {...register('training_data')} className="border p-2 w-full" />
+                    <div className="w-full pt-3">
+                        <FileUpload
+                            error={typeof errors.training_data?.message === "string" ? errors.training_data.message : undefined}
+                            onFileDrop={onFileDrop}
+                            {...register("training_data")}
+                        />
                     </div>
                 )}
-                <div className="w-full flex justify-between gap-2">
-                    <div>
-                        <label className="block mb-1">Number of Hidden Layers</label>
+                <div className="w-full flex justify-between gap-4 mt-4">
+                    <div className="w-1/2">
+                        <label className="block mb-1 text-sm">Number of Hidden Layers</label>
                         <TextField
                             type="number"
                             placeholder="Number of Hidden Layers"
@@ -92,8 +88,8 @@ export default function TrainModelForm({
                             {...register("number_of_hidden_layers", { valueAsNumber: true })}
                         />
                     </div>
-                    <div>
-                        <label className="block mb-1">Number of Neurons per Layer</label>
+                    <div className="w-1/2">
+                        <label className="block mb-1 text-sm">Number of Neurons per Layer</label>
                         <TextField
                             type="number"
                             placeholder="Number of Neurons per Layer"
@@ -102,9 +98,9 @@ export default function TrainModelForm({
                         />
                     </div>
                 </div>
-                <div className="w-full flex justify-between gap-2">
-                    <div>
-                        <label className="block mb-1">Early Stopping Patience</label>
+                <div className="w-full flex justify-between gap-4 mt-4">
+                    <div className="w-1/2">
+                        <label className="block mb-1 text-sm">Early Stopping Patience</label>
                         <TextField
                             type="number"
                             placeholder="Early Stopping Patience"
@@ -112,8 +108,8 @@ export default function TrainModelForm({
                             {...register("early_stopping_patience", { valueAsNumber: true })}
                         />
                     </div>
-                    <div>
-                        <label className="block mb-1">Epochs</label>
+                    <div className="w-1/2">
+                        <label className="block mb-1 text-sm">Epochs</label>
                         <TextField
                             type="number"
                             placeholder="Number of Epochs"
@@ -122,9 +118,9 @@ export default function TrainModelForm({
                         />
                     </div>
                 </div>
-                <div className="w-full flex justify-between gap-2">
-                    <div>
-                        <label className="block mb-1">Batch Size</label>
+                <div className="w-full flex justify-between gap-4 mt-4">
+                    <div className="w-1/2">
+                        <label className="block mb-1 text-sm">Batch Size</label>
                         <TextField
                             type="number"
                             placeholder="Batch Size"
@@ -133,8 +129,8 @@ export default function TrainModelForm({
                         />
                         
                     </div>
-                    <div>
-                        <label className="block mb-1">Validation Split</label>
+                    <div className="w-1/2">
+                        <label className="block mb-1 text-sm">Validation Split</label>
                         <TextField
                             type="number"
                             placeholder="Validation Split (0 to 1)"
@@ -143,12 +139,11 @@ export default function TrainModelForm({
                         />
                     </div>
                 </div>
-                <div className="w-full flex justify-end mt-4">
+                <div className="w-full flex justify-end mt-3">
                     <Button
                         text="Train Model"
                         buttonType="submit"
                         onClick={handleSubmit(onSubmit)}
-                        disabled={Object.keys(errors).length > 0}
                     />
                 </div>
             </form>

@@ -10,25 +10,25 @@ export const ModelTrainingSchema = z.object({
     number_of_neurons_per_layer: z
         .number({ required_error: 'Number of neurons per layer is required.' })
         .int({ message: 'Must be an integer.' })
-        .max(100, { message: 'Cannot have more than 1000 neurons per layer.' })
+        .max(1000, { message: 'Cannot have more than 1000 neurons per layer.' })
         .min(1, { message: 'Must be at least 1 neuron per layer.' }),
 
     early_stopping_patience: z
         .number({ required_error: 'Early stopping patience is required.' })
         .int({ message: 'Must be an integer.' })
         .max(100, { message: 'Patience cannot be more than 100.' })
-        .min(1, { message: 'Patience cannot be negative.' }),
+        .min(0, { message: 'Patience cannot be negative.' }),
 
     epochs: z
         .number({ required_error: 'Number of epochs is required.' })
         .int({ message: 'Must be an integer.' })
-        .max(500, { message: 'Cannot train for more than 1000 epochs.' })
+        .max(1000, { message: 'Cannot train for more than 1000 epochs.' })
         .min(1, { message: 'Must run at least 1 epoch.' }),
 
     batch_size: z
         .number({ required_error: 'Batch size is required.' })
         .int({ message: 'Must be an integer.' })
-        .max(500, { message: 'Batch size cannot be more than 1000.' })
+        .max(1000, { message: 'Batch size cannot be more than 1000.' })
         .min(1, { message: 'Batch size must be at least 1.' }),
 
     validation_split: z
@@ -40,5 +40,22 @@ export const ModelTrainingSchema = z.object({
 
     training_data: z
         .any()
-        .optional(),
+        .optional()
+        .refine((fileList) => {
+        if (!fileList || fileList.length === 0) return true;
+        const file = fileList[0];
+        return file instanceof File && file.name.endsWith('.csv');
+        }, {
+        message: 'Only CSV files are allowed.',
+        })
+}).superRefine((data, ctx) => {
+  if (data.using_files) {
+    if (!data.training_data || !Array.isArray(data.training_data) || data.training_data.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['training_data'],
+        message: 'Training data file is required when using files.',
+      });
+    }
+  }
 });

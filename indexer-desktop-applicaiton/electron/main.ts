@@ -36,6 +36,7 @@ const createWindow = () => {
 
   // Remove menu bar
   mainWindow.removeMenu();
+  mainWindow.webContents.openDevTools()
 
   const loadURL = async () => {
     if (is.dev) {
