@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import z from "zod";
 import { ModelTrainingSchema } from "@/schemas/zod/model-train-form";   
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,16 +8,27 @@ import { useForm } from "react-hook-form";
 import Button from "@/components/mini/buttons/form-buttons/button";
 import TextField from "@/components/mini/form-inputs/text-field";
 import FileUpload from "@/components/mini/form-inputs/file-upload";
+import { TrainedModelParameters } from "@/api-calls/trainer/trainer.type";
+import { FormDataForTraining } from "@/api-calls/trainer/trainer.type";
+import { trainModel } from "@/api-calls/trainer/trainer";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store";
 
-type TrainedModelParameters = z.infer<typeof ModelTrainingSchema>;
+type TrainedModelParametersValidated = z.infer<typeof ModelTrainingSchema>;
 
 export default function TrainModelForm({
     queryId,
     params,
+    setRecentParameters
 }: {
     queryId: number;
-    params: Omit<TrainedModelParameters, 'using_files' | 'training_data'>;
+    params: Omit<TrainedModelParametersValidated, 'using_files' | 'training_data'>;
+    setRecentParameters?: (params: TrainedModelParameters) => void;
 }) {
+    const accessToken = useSelector((state: RootState) => state.indexer.dba.access_token);
+
+    const [isLoading, setIsLoading] = useState(false);
+
 
     const {
         register,
@@ -26,7 +37,7 @@ export default function TrainModelForm({
         setValue,
         formState: { errors },
         reset,
-    } = useForm<TrainedModelParameters>({
+    } = useForm<TrainedModelParametersValidated>({
         resolver: zodResolver(ModelTrainingSchema),
         defaultValues: {
             ...params,
@@ -46,13 +57,47 @@ export default function TrainModelForm({
 
     const usingFiles = watch('using_files');
 
-    const onSubmit = (data: TrainedModelParameters) => {
-        console.log(queryId)
-        console.log('Final submitted values:', data);
+    const onSubmit = (data: TrainedModelParametersValidated) => {
+        setIsLoading(true);
+        const formData: FormDataForTraining = {
+            accessToken,
+            query_id: queryId,
+            number_of_hidden_layers: data.number_of_hidden_layers,
+            number_of_neurons_per_layer: data.number_of_neurons_per_layer,
+            early_stopping_patience: data.early_stopping_patience,
+            epochs: data.epochs,
+            batch_size: data.batch_size,
+            validation_split: data.validation_split,
+            using_files: data.using_files,
+            training_data: data.using_files ? data.training_data : undefined,
+        };
+
+        trainModel(formData)
+            .then((response) => {
+                // Explicitly type response as TrainedResults
+                const trainedResponse = response as import("@/api-calls/trainer/trainer.type").TrainedResults;
+                if (trainedResponse) {
+                    // The response only contains rmse and r2_percentage
+                    const trainedParams: TrainedModelParameters = {
+                        ...formData,
+                        rmse: trainedResponse.rmse,
+                        r2_percentage: trainedResponse.r2_percentage,
+                        created_at: new Date().toISOString(), // Assuming current time as created_at
+                    };
+                    setRecentParameters?.(trainedParams);
+                    reset();
+                }
+            })
+            .catch((error) => {
+                console.error("Error training model:", error);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     };
 
-    const onFileDrop = (files: FileList) => {
-        setValue("training_data", Array.from(files), { shouldValidate: true });
+    const onFileDrop = (file: File) => {
+        setValue('training_data', file);
     };
 
     return (
@@ -144,6 +189,8 @@ export default function TrainModelForm({
                         text="Train Model"
                         buttonType="submit"
                         onClick={handleSubmit(onSubmit)}
+                        loading={isLoading}
+                        disabled={isLoading}
                     />
                 </div>
             </form>

@@ -39,23 +39,20 @@ export const ModelTrainingSchema = z.object({
     using_files: z.boolean({ required_error: 'Using files field is required.' }),
 
     training_data: z
-        .any()
+        .instanceof(File)
         .optional()
-        .refine((fileList) => {
-        if (!fileList || fileList.length === 0) return true;
-        const file = fileList[0];
-        return file instanceof File && file.name.endsWith('.csv');
+        .refine((file) => {
+          if (!file) return true; // allow undefined unless required
+          return file.name.endsWith('.csv');
         }, {
-        message: 'Only CSV files are allowed.',
-        })
+          message: 'Only CSV files are allowed.',
+        }),
 }).superRefine((data, ctx) => {
-  if (data.using_files) {
-    if (!data.training_data || !Array.isArray(data.training_data) || data.training_data.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['training_data'],
-        message: 'Training data file is required when using files.',
-      });
-    }
+  if (data.using_files && !data.training_data) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['training_data'],
+      message: 'Training data file is required when using files.',
+    });
   }
 });

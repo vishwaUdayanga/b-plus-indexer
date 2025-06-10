@@ -42,19 +42,25 @@ export async function trainModel(formData: FormDataForTraining) {
         training_data
     } = formData;
 
-    formDataObj.append("accessToken", accessToken);
     formDataObj.append("query_id", query_id.toString());
     formDataObj.append("number_of_hidden_layers", number_of_hidden_layers.toString());
     formDataObj.append("number_of_neurons_per_layer", number_of_neurons_per_layer.toString());
     formDataObj.append("early_stopping_patience", early_stopping_patience.toString());
     formDataObj.append("epochs", epochs.toString());
     formDataObj.append("batch_size", batch_size.toString());
-    formDataObj.append("validation_split", validation_split.toString());
-    formDataObj.append("using_files", using_files.toString());
+    formDataObj.append("validation_split", String(validation_split));
+    formDataObj.append("using_files", using_files ? "true" : "false");
 
     if (using_files && training_data) {
         formDataObj.append("training_data", training_data);
     }
+
+    // Logging the formData for debugging purposes
+    for (const [key, value] of formDataObj.entries()) {
+        console.log(`FormData - ${key}:`, value);
+    }
+    console.log("training_data instanceof File", training_data instanceof File);
+
 
     const response = await fetch(`${baseUrl}/train_model`, {
         method: "POST",

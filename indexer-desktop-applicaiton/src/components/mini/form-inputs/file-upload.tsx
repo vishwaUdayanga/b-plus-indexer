@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { TextFieldProps } from "./text-field.type";
 
 type FileUploadProps = TextFieldProps & {
-  onFileDrop?: (files: FileList) => void;
+  onFileDrop?: (file: File) => void;
 };
 
 export default function FileUpload({ error, onFileDrop, ...props }: FileUploadProps) {
@@ -15,15 +15,15 @@ export default function FileUpload({ error, onFileDrop, ...props }: FileUploadPr
         setDragOver(false);
 
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        setFileName(e.dataTransfer.files[0].name);
+            setFileName(e.dataTransfer.files[0].name);
 
-        if (fileInputRef.current) {
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(e.dataTransfer.files[0]);
-            fileInputRef.current.files = dataTransfer.files;
-        }
+            if (fileInputRef.current) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(e.dataTransfer.files[0]);
+                fileInputRef.current.files = dataTransfer.files;
+            }
 
-        onFileDrop?.(e.dataTransfer.files);
+            onFileDrop?.(e.dataTransfer.files[0]);
         }
     };
 
@@ -31,7 +31,7 @@ export default function FileUpload({ error, onFileDrop, ...props }: FileUploadPr
         if (e.target.files && e.target.files.length > 0) {
             console.log("File name:", e.target.files[0].name);
             setFileName(e.target.files[0].name);
-            onFileDrop?.(e.target.files);
+            onFileDrop?.(e.target.files[0]);
         }
     };
 

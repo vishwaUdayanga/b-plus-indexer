@@ -16,3 +16,4 @@ class ModelTrainingResponseForFetchAttributes(BaseModel):
     validation_split: float
     rmse: float
     r2_percentage: float
+    created_at: str
