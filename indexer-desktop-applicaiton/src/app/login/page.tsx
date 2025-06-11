@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import Input from "@/components/mini/text-fields/input";
+import Input from "@/components/mini/form-inputs/input";
 import Button from "@/components/mini/buttons/form-buttons/button";
 import { LoginRequest } from "@/api-calls/auth/login.type";
 import { login } from "@/api-calls/auth/login";

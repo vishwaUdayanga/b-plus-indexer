@@ -272,7 +272,8 @@ def get_latest_trained_model_attributes(db: Session, query_id: int) -> ModelTrai
             batch_size=trained_model.batch_size,
             validation_split=trained_model.validation_split,
             rmse=trained_model.rmse,
-            r2_percentage=trained_model.r2_percentage
+            r2_percentage=trained_model.r2_percentage,
+            created_at=trained_model.created_at.strftime('%Y-%m-%d %H:%M:%S')
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching trained model attributes: {str(e)}")
