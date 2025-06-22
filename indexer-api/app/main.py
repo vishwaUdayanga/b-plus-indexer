@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import health_check_routes, dba_routes, diagnostics_routes, statistics_routes, model_trainer_routes
+from app.routes import health_check_routes, dba_routes, diagnostics_routes, statistics_routes, model_trainer_routes, adim_routes
 from app.database.base import Base
 from app.database.session import b_plus_engine
 from app.models import tc_query, query_log, trained_models
@@ -42,3 +42,6 @@ app.include_router(statistics_routes.router)
 
 # Include the model trainer routes
 app.include_router(model_trainer_routes.router)
+
+# Include the ADIM routes
+app.include_router(adim_routes.router)
