@@ -1,7 +1,9 @@
+import pickle
 from sqlalchemy.orm import Session
 from app.models.tc_query import TCQuery
 from app.models.query_log import QueryLog
-from app.schemas.adim import ADIMScheduleResponse
+from app.models.trained_models import TrainedModel
+from app.schemas.adim import ADIMScheduleResponse, Schedules
 import subprocess
 from fastapi import HTTPException
 import os
@@ -9,6 +11,10 @@ import re
 from typing import List, Optional, Dict
 from app.config.settings import settings
 from difflib import SequenceMatcher
+from datetime import datetime
+import numpy as np
+from datetime import timedelta
+from sqlalchemy import text
 
 #constants
 LOG_DIR = "/logs"
@@ -212,11 +218,122 @@ def insert_query_logs(db: Session, user_entries: List[Dict[str, Optional[str]]])
         db.add(query_log)
 
     db.commit()
+
+def schedule_next_exec_times(db_org: Session, db_b_plus: Session, window_size: int = 10) -> ADIMScheduleResponse:
+    """Predict the next execution time for each time consuming query and return the schedules."""
+
+    # The schedules list to be returned
+    schedules: List[Schedules] = []
+
+    # Fetch all time consuming queries
+    tc_queries = db_b_plus.query(TCQuery).all()
+
+    # Iterate through each time consuming query
+    for tc_query in tc_queries:
+        # Continue if the auto_indexing is not enabled
+        if not tc_query.auto_indexing: 
+            continue
+
+        # Continue if the next_time_execution is already set and greater than the current time stamp.
+        if tc_query.next_time_execution and tc_query.next_time_execution > datetime.now():
+            continue
+
+        # Get the last 6 queries for from  the QueryLog table using the tc_query_id
+        last_queries = db_b_plus.query(QueryLog).filter(
+            QueryLog.tc_query_id == tc_query.id
+        ).order_by(QueryLog.time_stamp.desc()).limit(window_size + 1).all()
+
+        if not last_queries:
+            continue
+
+        if len(last_queries) < window_size:
+            # If there are not enough queries, we cannot predict the next execution time
+            continue
+
+        # Set optimized of the query log to true if the time_stamp of the query log is greater than the next_time_execution of the tc_query
+        for query_log in last_queries:
+            if query_log.time_stamp > tc_query.next_time_execution:
+                query_log.optimized = True
+        
+        # Predict the next execution time based on the last queries
+
+        # Fetch the model row that has the highest r2_percentage for the current tc_query
+        model_row  = db_b_plus.query(TrainedModel).filter(
+            TrainedModel.tc_query_id == tc_query.id
+        ).order_by(TrainedModel.r2_percentage.desc()).first()
+
+        if not model_row:
+            continue
+
+        # Load model and scalers
+        model = pickle.loads(model_row.model_data)
+        scaler_X = pickle.loads(model_row.scaler_x)
+        scaler_y = pickle.loads(model_row.scaler_y)
+
+        last_queries = sorted(last_queries, key=lambda last_queries: last_queries.time_stamp)
+        
+        deltas = [
+            (last_queries[i + 1].time_stamp - last_queries[i].time_stamp).total_seconds()
+            for i in range(window_size)
+        ]
+
+        # Get last timestamp's hour/weekday
+        last_ts = last_queries[-1].time_stamp
+        hour = last_ts.hour
+        weekday = last_ts.weekday()
+
+        # Build input vector
+        sin_hour = np.sin(2 * np.pi * hour / 24)
+        cos_hour = np.cos(2 * np.pi * hour / 24)
+        sin_weekday = np.sin(2 * np.pi * weekday / 7)
+        cos_weekday = np.cos(2 * np.pi * weekday / 7)
+
+        input_vector = np.array(deltas + [sin_hour, cos_hour, sin_weekday, cos_weekday]).reshape(1, -1)
+        input_scaled = scaler_X.transform(input_vector)
+
+        # Predict delta and convert back
+        predicted_scaled = model.predict(input_scaled)
+        predicted_delta = scaler_y.inverse_transform(predicted_scaled)[0][0]
+
+        predicted_time = last_ts + timedelta(seconds=predicted_delta)
+
+        # Delete all the existing indexes for the tc_query if predicted_time-current time is greater than 5 hours. Otherwise, continue the loop
+        if predicted_time - datetime.now() < timedelta(hours=5):
+            continue
+
+        # Delete all the existing indexes for the tc_query
+        # Extracting the index names from the tc_query. They are in the third word of each string inside the indexes column
+        indexes = tc_query.indexes
+        if not indexes:
+            continue
+        indexes = [index.split()[2] for index in indexes if len(index.split()) > 2]
+        if not indexes:
+            continue
+        # Delete the indexes from the database
+        # Have to track that the indexes were dropped in this time if exists
+        for index in indexes:
+            db_org.execute(text(f"DROP INDEX IF EXISTS {index}"))
+        db_org.commit()
+
+        # Update the next_time_execution of the tc_query and save the changes in the database
+        tc_query.next_time_execution = predicted_time
+
+        # Add the schedule to the schedules list
+        schedules.append(Schedules(
+            query_id=tc_query.id,
+            next_execution_time=predicted_time.strftime('%Y-%m-%d %H:%M:%S')
+        ))
+    
+    # Commit the changes to the database
+    db_b_plus.commit()
+
+    # Return the schedules
+    return ADIMScheduleResponse(schedules=schedules)
     
 
-def get_adim_schedules(db: Session) -> ADIMScheduleResponse:
-    """Test the existing functions to ensure they work as expected. For now, this function will read the log files, get the user entries, 
-    and insert them into the database."""
+def get_adim_schedules(db_org: Session, db_b_plus: Session) -> ADIMScheduleResponse:
+    """This function read logs from pg-org-logs volume and insert them into the database. Then it will predicts the next execution time for each time consuming query and returns the schedules
+    along with the query id and the next execution time."""
     log_filenames = get_log_filenames()
     if not log_filenames:
         raise HTTPException(status_code=404, detail="No log files found.")
@@ -228,11 +345,16 @@ def get_adim_schedules(db: Session) -> ADIMScheduleResponse:
         #Print the first 1000 characters of the log file content for debugging
         user_entries = parse_log_content(content)
         if user_entries:
-            insert_query_logs(db, user_entries)
+            insert_query_logs(db_b_plus, user_entries)
         delete_log_file(filename)
+    
+    # Schedule the next execution times for the time consuming queries
+    schedules_response = schedule_next_exec_times(db_org, db_b_plus)
+    if not schedules_response.schedules:
+        raise HTTPException(status_code=404, detail="No schedules found.")
+    return schedules_response
 
-    # Return a dummy response for now
-    return ADIMScheduleResponse(schedules=[])
+
 
 
 
