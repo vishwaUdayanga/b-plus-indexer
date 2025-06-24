@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int
 
+    ORG_DB_LOG_VOLUME_NAME: str
+
+    IS_DEV_MODE: bool = True
+
     class Config:
         env_file = ".env"
         

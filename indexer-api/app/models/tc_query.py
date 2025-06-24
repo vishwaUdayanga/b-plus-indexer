@@ -24,5 +24,8 @@ class TCQuery(Base):
     # Defining the relationship with TrainedModel
     trained_models = relationship("TrainedModel", back_populates="tc_query")
 
+    # Defining the relationship with IndexMaintenanceLog
+    index_maintenance_logs = relationship("IndexMaintenanceLog", back_populates="tc_query")
+
 
 
