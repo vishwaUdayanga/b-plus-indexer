@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.routes import health_check_routes, dba_routes, diagnostics_routes, statistics_routes, model_trainer_routes, adim_routes
 from app.database.base import Base
 from app.database.session import b_plus_engine
-from app.models import tc_query, query_log, trained_models
+from app.models import tc_query, query_log, trained_models, index_maintenance_log
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 

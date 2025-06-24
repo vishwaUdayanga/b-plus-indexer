@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.tc_query import TCQuery
 from app.models.query_log import QueryLog
 from app.models.trained_models import TrainedModel
+from app.models.index_maintenance_log import IndexMaintenanceLog
 from app.schemas.adim import ADIMScheduleResponse, Schedules
 import subprocess
 from fastapi import HTTPException
@@ -235,10 +236,10 @@ def schedule_next_exec_times(db_org: Session, db_b_plus: Session, window_size: i
             continue
 
         # Continue if the next_time_execution is already set and greater than the current time stamp.
-        if tc_query.next_time_execution and tc_query.next_time_execution > datetime.now():
+        if tc_query.next_time_execution is not None and tc_query.next_time_execution > datetime.now():
             continue
 
-        # Get the last 6 queries for from  the QueryLog table using the tc_query_id
+        # Get the last 11 queries for from  the QueryLog table using the tc_query_id
         last_queries = db_b_plus.query(QueryLog).filter(
             QueryLog.tc_query_id == tc_query.id
         ).order_by(QueryLog.time_stamp.desc()).limit(window_size + 1).all()
@@ -246,17 +247,17 @@ def schedule_next_exec_times(db_org: Session, db_b_plus: Session, window_size: i
         if not last_queries:
             continue
 
-        if len(last_queries) < window_size:
+        if len(last_queries) < window_size+1:
             # If there are not enough queries, we cannot predict the next execution time
             continue
 
         # Set optimized of the query log to true if the time_stamp of the query log is greater than the next_time_execution of the tc_query
-        for query_log in last_queries:
-            if query_log.time_stamp > tc_query.next_time_execution:
-                query_log.optimized = True
+        if tc_query.next_time_execution is not None:
+            for query_log in last_queries:
+                if query_log.time_stamp > tc_query.next_time_execution:
+                    query_log.optimized = True
         
         # Predict the next execution time based on the last queries
-
         # Fetch the model row that has the highest r2_percentage for the current tc_query
         model_row  = db_b_plus.query(TrainedModel).filter(
             TrainedModel.tc_query_id == tc_query.id
@@ -295,11 +296,14 @@ def schedule_next_exec_times(db_org: Session, db_b_plus: Session, window_size: i
         predicted_scaled = model.predict(input_scaled)
         predicted_delta = scaler_y.inverse_transform(predicted_scaled)[0][0]
 
-        predicted_time = last_ts + timedelta(seconds=predicted_delta)
+        predicted_time = last_ts + timedelta(seconds=float(predicted_delta))
+
+        # Set the predicted_time 6 hours before
+        predicted_time = predicted_time - timedelta(hours=6)
 
         # Delete all the existing indexes for the tc_query if predicted_time-current time is greater than 5 hours. Otherwise, continue the loop
-        if predicted_time - datetime.now() < timedelta(hours=5):
-            continue
+        # if (predicted_time - datetime.now()) < timedelta(hours=5):
+        #     continue
 
         # Delete all the existing indexes for the tc_query
         # Extracting the index names from the tc_query. They are in the third word of each string inside the indexes column
@@ -315,12 +319,22 @@ def schedule_next_exec_times(db_org: Session, db_b_plus: Session, window_size: i
             db_org.execute(text(f"DROP INDEX IF EXISTS {index}"))
         db_org.commit()
 
+        # Create a new IndexMaintenanceLog entry. Dropping the indexes is recorded as index_created=False
+        index_maintenance_log = IndexMaintenanceLog(
+            tc_query_id=tc_query.id,
+            time_stamp=datetime.now(),
+            index_created=False 
+        )
+
+        # Add the index maintenance log to the session
+        db_b_plus.add(index_maintenance_log)
+
         # Update the next_time_execution of the tc_query and save the changes in the database
         tc_query.next_time_execution = predicted_time
 
         # Add the schedule to the schedules list
         schedules.append(Schedules(
-            query_id=tc_query.id,
+            tc_query_id=tc_query.id,
             next_execution_time=predicted_time.strftime('%Y-%m-%d %H:%M:%S')
         ))
     
@@ -335,24 +349,60 @@ def get_adim_schedules(db_org: Session, db_b_plus: Session) -> ADIMScheduleRespo
     """This function read logs from pg-org-logs volume and insert them into the database. Then it will predicts the next execution time for each time consuming query and returns the schedules
     along with the query id and the next execution time."""
     log_filenames = get_log_filenames()
-    if not log_filenames:
-        raise HTTPException(status_code=404, detail="No log files found.")
-
-    for filename in log_filenames:
-        content = read_log_file(filename)
-        if not content:
-            continue
-        #Print the first 1000 characters of the log file content for debugging
-        user_entries = parse_log_content(content)
-        if user_entries:
-            insert_query_logs(db_b_plus, user_entries)
-        delete_log_file(filename)
+    if log_filenames:
+        for filename in log_filenames:
+            content = read_log_file(filename)
+            if not content:
+                continue
+            #Print the first 1000 characters of the log file content for debugging
+            user_entries = parse_log_content(content)
+            if user_entries:
+                insert_query_logs(db_b_plus, user_entries)
+            delete_log_file(filename)
     
     # Schedule the next execution times for the time consuming queries
     schedules_response = schedule_next_exec_times(db_org, db_b_plus)
     if not schedules_response.schedules:
         raise HTTPException(status_code=404, detail="No schedules found.")
     return schedules_response
+
+def create_index_using_query_id(db_org: Session, db_b_plus: Session, tc_query_id: int) -> None:
+    """Create indexes for the given TCQuery ID."""
+    # Fetch the TCQuery
+    tc_query = db_b_plus.query(TCQuery).filter(TCQuery.id == tc_query_id).first()
+    if not tc_query:
+        raise HTTPException(status_code=404, detail="TCQuery not found.")
+
+    # Check if auto_indexing is enabled
+    if not tc_query.auto_indexing:
+        raise HTTPException(status_code=400, detail="Auto indexing is not enabled for this query.")
+
+    # Get the index creation SQL commands from the TCQuery
+    index_commands = tc_query.indexes
+    if not index_commands:
+        raise HTTPException(status_code=404, detail="No indexes found for this query.")
+    
+    # Execute each index creation command
+    for command in index_commands:
+        try:
+            db_org.execute(text(command))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error creating index: {str(e)}")
+    
+    # Commit the changes
+    db_org.commit()
+
+    # Log the index creation in IndexMaintenanceLog
+    index_maintenance_log = IndexMaintenanceLog(
+        tc_query_id=tc_query_id,
+        time_stamp=datetime.now(),
+        index_created=True  # Indicating indexes were created
+    )
+
+    db_b_plus.add(index_maintenance_log)
+    db_b_plus.commit()
+
+
 
 
 
