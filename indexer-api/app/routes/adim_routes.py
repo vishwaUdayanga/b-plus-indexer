@@ -12,7 +12,20 @@ async def adim_schedules_endpoint(db_org=Depends(get_org_db), db_b_plus=Depends(
     Endpoint to retrieve ADIM schedules.
     Returns a JSON response with the schedules.
     """
-    return get_adim_schedules(db_org, db_b_plus)
+    # return get_adim_schedules(db_org, db_b_plus)
+    # Return a sample response for testing purposes
+    return ADIMScheduleResponse(
+        schedules=[
+            {
+                "tc_query_id": 54,
+                "next_execution_time": "2025-06-26T02:22:30"
+            },
+            {
+                "tc_query_id": 57,
+                "next_execution_time": "2025-06-26T02:24:30"
+            }
+        ]
+    )
 
 @router.post("/adim/create_index", tags=["ADIM Schedules"], dependencies=[Depends(auth_wrapper)])
 async def create_index_endpoint(request: CreateIndexRequest, db_org=Depends(get_org_db), db_b_plus=Depends(get_b_plus_db)):
