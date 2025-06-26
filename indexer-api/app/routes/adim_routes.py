@@ -18,11 +18,11 @@ async def adim_schedules_endpoint(db_org=Depends(get_org_db), db_b_plus=Depends(
         schedules=[
             {
                 "tc_query_id": 54,
-                "next_execution_time": "2025-06-26T02:22:30"
+                "next_execution_time": "2025-06-26T13:42:30"
             },
             {
                 "tc_query_id": 57,
-                "next_execution_time": "2025-06-26T02:24:30"
+                "next_execution_time": "2025-06-26T13:44:30"
             }
         ]
     )

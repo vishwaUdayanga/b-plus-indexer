@@ -2,8 +2,8 @@
 
 QUERY_ID=$1
 
-# Run the script
-python3 /app/index_creation.py "$QUERY_ID"
+# Run the index creation script
+/usr/local/bin/python3 /app/index_creation.py "$QUERY_ID"
 
-# Remove the cron job line that matches this script call
-crontab -l | grep -v "run_and_clean.sh $QUERY_ID" | crontab -
+# Safely remove this cron job from /etc/cron.d/adim_dynamic_jobs
+sed -i "/run_and_clean.sh $QUERY_ID/d" /etc/cron.d/adim_dynamic_jobs

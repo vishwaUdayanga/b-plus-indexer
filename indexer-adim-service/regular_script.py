@@ -33,7 +33,7 @@ def schedule_cron_jobs():
         hour = dt.hour
         day = dt.day
         month = dt.month
-        command = f"python3 /app/run_and_clean.sh {schedule.tc_query_id}"
+        command = f"/app/run_and_clean.sh {schedule.tc_query_id}"
         cron_line = f"{minute} {hour} {day} {month} * root {command}\n"
         cron_lines.append(cron_line)
 
@@ -42,7 +42,6 @@ def schedule_cron_jobs():
         f.writelines(cron_lines)
 
     os.chmod(cron_file, 0o644)
-    os.system("service cron reload")
 
 
 if __name__ == "__main__":
