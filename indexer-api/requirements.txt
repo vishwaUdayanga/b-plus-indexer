@@ -16,3 +16,4 @@ pandas
 tensorflow 
 scikit-learn
 python-multipart
+python-dateutil>=2.8.0
