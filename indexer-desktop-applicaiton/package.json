@@ -25,6 +25,7 @@
     "asar": false,
     "executableName": "B+ Indexer",
     "appId": "com.indexer.bplusindexer",
+    "icon": "public/favicon.ico",
     "asarUnpack": [
       "node_modules/next",
       "node_modules/@img",
@@ -51,11 +52,13 @@
       }
     ],
     "win": {
+      "icon": "public/favicon.ico",
       "target": [
         "nsis"
       ]
     },
     "linux": {
+      "icon": "public/favicon.ico",
       "target": [
         "deb"
       ],

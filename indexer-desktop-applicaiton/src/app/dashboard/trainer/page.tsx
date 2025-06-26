@@ -5,7 +5,7 @@ import TabMessageBox from "@/components/medium/tab-message-box/tab-message-box";
 import { TimeConsumingQueries } from "@/types/redux/states";
 import { RootState } from "@/app/store";
 import { useSelector } from "react-redux";
-import Trainer from "@/components/large/trainer/trainer";
+import TCQueryDemonstration from "@/components/large/trainer/trainer";
 
 const Page: FC = () => {
     // states
@@ -37,7 +37,7 @@ const Page: FC = () => {
 
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
-            <Trainer data={timeConsumingQueries} />
+            <TCQueryDemonstration data={timeConsumingQueries} destination="train-model" title="Model Trainer"/>
         </div>
     )
 }

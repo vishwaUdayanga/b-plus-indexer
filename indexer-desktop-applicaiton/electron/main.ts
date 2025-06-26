@@ -13,6 +13,9 @@ const createWindow = () => {
     frame: false,
     transparent: false,
     alwaysOnTop: true,
+    icon: is.dev
+      ? join(__dirname, "..", "public", "favicon.ico")
+      : join(app.getAppPath(), "app", "public", "favicon.ico"),
   });
 
   const splashPath = is.dev
@@ -26,6 +29,7 @@ const createWindow = () => {
     width: 1600,
     height: 900,
     show: false,
+    icon: is.dev ? join(__dirname, "..", "public", "favicon.ico") : join(app.getAppPath(), "app", "public", "favicon.ico"),
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       nodeIntegration: true,
@@ -36,7 +40,6 @@ const createWindow = () => {
 
   // Remove menu bar
   mainWindow.removeMenu();
-  mainWindow.webContents.openDevTools()
 
   const loadURL = async () => {
     if (is.dev) {
