@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
-
+from datetime import datetime
 
 class TCQueryResponse(BaseModel):
     id: int
@@ -13,7 +13,7 @@ class TCQueryResponse(BaseModel):
     score: float
     indexes: List[str]
     estimated_time_for_indexes: Optional[float] = None
-    next_time_execution: Optional[float] = None
+    next_time_execution: Optional[datetime] = None
     auto_indexing: Optional[bool] = None
 
     class Config:

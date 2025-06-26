@@ -19,7 +19,7 @@ export default function TrainModel({params}: {params: TrainModelParams}) {
 
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
-            <h1 className="text-xl font-bold ml-2">Train Model {params.queryId} {params.parameters?.epochs}</h1>
+            <h1 className="text-xl font-bold ml-2">Train Model</h1>
             <div className="flex w-full h-full p-2 gap-4 overflow-hidden">
                 <div className="bg-white rounded p-4 w-2/5 h-fit">
                     <TrainModelForm
