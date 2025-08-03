@@ -18,7 +18,7 @@ services:
     ports:
       - "5435:5432"
     environment:
-      - POSTGRES_PASSWORD=vishwa310
+      - POSTGRES_PASSWORD=your_password
     volumes:
       - pg-org-data:/var/lib/postgresql/data
       - pg-org-logs:/var/log/postgresql
@@ -29,7 +29,7 @@ services:
     ports:
       - "5436:5432"
     environment:
-      - POSTGRES_PASSWORD=vishwa310
+      - POSTGRES_PASSWORD=your_password
     volumes:
       - pg-b-plus-data:/var/lib/postgresql/data
 
@@ -37,9 +37,9 @@ services:
     image: vishwaudayanga/indexer-adim-service:1.3
     container_name: indexer_adim_service_container
     environment:
-      - END_POINT=http://192.168.232.1:8000
+      - END_POINT=http://your_ip:8000
       - USER_NAME=vishwa@bindex.com
-      - PASSWORD=vishwa310
+      - PASSWORD=your_password
     volumes:
       - ./logs:/var/log
 
