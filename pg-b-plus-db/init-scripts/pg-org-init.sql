@@ -1,0 +1,1 @@
+CREATE DATABASE b_plus_indexer_database;

@@ -1,0 +1,49 @@
+services:
+  indexer-api:
+    image: vishwaudayanga/indexer-api:1.1
+    container_name: indexer_api_container
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - pg-org-logs:/logs
+    depends_on:
+      - pg-org-container
+      - pg-b-plus-container
+
+  pg-org-container:
+    image: vishwaudayanga/pg-org-db:1.1
+    container_name: pg-org-container-prod
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_PASSWORD=your_password
+    volumes:
+      - pg-org-data:/var/lib/postgresql/data
+      - pg-org-logs:/var/log/postgresql
+
+  pg-b-plus-container:
+    image: vishwaudayanga/pg-b-plus-db:1.0
+    container_name: pg-b-plus-container-prod
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_PASSWORD=your_password
+    volumes:
+      - pg-b-plus-data:/var/lib/postgresql/data
+
+  indexer-adim-service:
+    image: vishwaudayanga/indexer-adim-service:1.3
+    container_name: indexer_adim_service_container
+    environment:
+      - END_POINT=http://your_ip:8000
+      - USER_NAME=vishwa@bindex.com
+      - PASSWORD=your_password
+    volumes:
+      - ./logs:/var/log
+
+volumes:
+  pg-org-data:
+  pg-org-logs:
+  pg-b-plus-data:

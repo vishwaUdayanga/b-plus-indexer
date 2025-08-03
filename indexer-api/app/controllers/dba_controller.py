@@ -1,8 +1,7 @@
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+# from azure.identity import DefaultAzureCredential
+# from azure.keyvault.secrets import SecretClient
 from jose import jwt
 from datetime import datetime, timedelta, timezone
-import json
 import uuid
 from fastapi import HTTPException
 
@@ -14,19 +13,23 @@ def get_keyvault_secrets():
     """
     Fetch secrets from Azure Key Vault.
     """
-    credential = DefaultAzureCredential()
-    secret_client = SecretClient(vault_url=settings.AZURE_KEYVAULT_URL, credential=credential)
+    # credential = DefaultAzureCredential()
+    # secret_client = SecretClient(vault_url=settings.AZURE_KEYVAULT_URL, credential=credential)
     
-    try: 
-        secret = secret_client.get_secret(settings.AZURE_KEYVAULT_SECRET_NAME)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching secret: {str(e)}")
+    # try: 
+    #     secret = secret_client.get_secret(settings.AZURE_KEYVAULT_SECRET_NAME)
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=f"Error fetching secret: {str(e)}")
     
-    # Check if the secret is empty
-    if not secret.value:
-        raise HTTPException(status_code=500, detail="Secret is empty")
+    # # Check if the secret is empty
+    # if not secret.value:
+    #     raise HTTPException(status_code=500, detail="Secret is empty")
 
-    return json.loads(secret.value)
+    # return json.loads(secret.value)
+
+    return {
+        "vishwa@bindex.com": settings.USER
+    }
 
 def authenticate_dba(dba: LoginRequest) -> LoginResponse | HTTPException:
     """

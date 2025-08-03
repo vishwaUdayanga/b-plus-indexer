@@ -14,6 +14,8 @@ class Settings(BaseSettings):
 
     IS_DEV_MODE: bool = True
 
+    USER: str
+
     class Config:
         env_file = ".env"
         
