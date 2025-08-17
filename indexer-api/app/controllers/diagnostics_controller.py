@@ -155,23 +155,30 @@ def process_order_by(query: Expression, table_info: Dict[str, Dict[str, Any]], a
             expr = order_expr.this
             desc = order_expr.args.get("desc", False)
         
-        # Find any columns used in this expression to determine the table
+        # Check if expr is a single column
         columns = list(expr.find_all(exp.Column))
-        if columns:
-            # Assuming all columns in the ORDER BY clause are from the same table
-            first_table = None
-            for column in columns:
-                table, _ = resolve_column(column, alias_map)
-                if table:
-                    first_table = table if not first_table else first_table
-            
-            if first_table: 
+        if len(columns) == 1 and expr == columns[0]:
+            # simple column
+            table, col = resolve_column(columns[0], alias_map)
+            if table:
+                ensure_table(table, table_info)
+                expr_sql = col + (" DESC" if desc else "")
+                table_info[table]['order_exprs'].append(expr_sql)
+        else:
+            # complex expression: keep the full SQL string
+            table_candidates = [resolve_column(c, alias_map)[0] for c in columns if resolve_column(c, alias_map)[0]]
+            first_table = table_candidates[0] if table_candidates else None
+            if first_table:
                 ensure_table(first_table, table_info)
-                # Add the expression to the order_exprs with DESC. Scale for ASC in future
-                expr_sql = str(expr)
-                if desc:
-                    expr_sql += " DESC"
+                expr_sql = str(expr) + (" DESC" if desc else "")
                 table_info[first_table]['order_exprs'].append(expr_sql)
+
+                # ensure_table(first_table, table_info)
+                # # Add the expression to the order_exprs with DESC. Scale for ASC in future
+                # expr_sql = str(expr)
+                # if desc:
+                #     expr_sql += " DESC"
+                # table_info[first_table]['order_exprs'].append(expr_sql)
 
 def process_group_by(query: Expression, table_info: Dict[str, Dict[str, Any]], alias_map: Dict[str, str]) -> None:
     """
@@ -300,7 +307,7 @@ def find_best_indexes(query: str, db: Session) -> List[str]:
         existing_defs = [tuple(row) for row in existing_defs]
 
         # Determine the method to use for the index
-        method = "hash" if where_all_eq and not order_exprs and not group_exprs else "btree"
+        method = "btree"
 
         # Case 1: Single WHERE column with ORDER BY and GROUP BY expressions
         case_1_single_where_column(where_cols, order_exprs, group_exprs, table_name, create_stmts, method, existing_defs)
