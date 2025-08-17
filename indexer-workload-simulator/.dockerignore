@@ -1,0 +1,23 @@
+# Ignore virtual environment
+venv/
+
+# Ignore .env
+.env
+
+# Bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Git
+.git
+.gitignore
+
+# Logs
+.DS_Store
+*.log
+
+# Editor folders
+.vscode/
+.idea/
