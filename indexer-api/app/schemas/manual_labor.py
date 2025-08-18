@@ -20,3 +20,15 @@ class StatQueryResponse(BaseModel):
 
 class CreateTCQueryRequest(BaseModel):
     query_id: str
+
+class ChangeAutoIndexingRequest(BaseModel):
+    query_id: int
+    enable: bool
+
+class RemoveIndexRequest(BaseModel):
+    query_id: int
+    index: str
+
+class AddIndexRequest(BaseModel):
+    query_id: int
+    index: str

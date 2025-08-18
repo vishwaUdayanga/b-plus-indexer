@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.tc_query import TCQuery
 from app.schemas.diagnostics import TCQueryResponse
-from app.schemas.manual_labor import DeleteTimeConsumingQueryRequest, IndexStatus, IndexStatusResponse, StatQueryResponse, StatQuery, CreateTCQueryRequest
+from app.schemas.manual_labor import DeleteTimeConsumingQueryRequest, IndexStatus, IndexStatusResponse, StatQueryResponse, StatQuery, CreateTCQueryRequest, ChangeAutoIndexingRequest, RemoveIndexRequest, AddIndexRequest
 from fastapi import HTTPException, status
 from app.controllers.diagnostics_controller import find_time_consuming_queries, find_best_indexes
 from sqlalchemy import text
@@ -295,4 +295,81 @@ def add_time_consuming_query(
             raise HTTPException(status_code=404, detail="New time-consuming query not found")
 
     return TCQueryResponse.model_validate(new_query_obj)
+
+def change_auto_indexing(db_b_plus: Session, request: ChangeAutoIndexingRequest):
+    query = db_b_plus.query(TCQuery).filter(TCQuery.id == request.query_id).first()
+    if not query:
+        raise HTTPException(status_code=404, detail="Query not found")
+
+    query.auto_indexing = request.enable
+    db_b_plus.commit()
+
+    return {"detail": "Auto indexing updated successfully"}
+
+def remove_index(db_b_plus: Session, request: RemoveIndexRequest):
+    """
+    Remove an index from the indexes array of a query if it exists.
+    """
+
+    query = db_b_plus.query(TCQuery).filter(TCQuery.id == request.query_id).first()
+    if not query:
+        raise HTTPException(status_code=404, detail="Query not found")
+
+    # Ensure indexes is a list (protect against None/NULL in DB)
+    if not query.indexes:
+        raise HTTPException(status_code=404, detail="No indexes found for this query")
+
+    if request.index in query.indexes:
+        # Remove index safely
+        query.indexes = [idx for idx in query.indexes if idx != request.index]
+
+        db_b_plus.add(query)  # make sure session knows it's updated
+        db_b_plus.commit()
+        db_b_plus.refresh(query)
+
+        return {"detail": f"Index '{request.index}' removed successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Index not found")
+
+def add_index(db_b_plus: Session, db_org: Session, request: AddIndexRequest):
+    """
+    This will first check whether the index is correct by executing it in the organization database. 
+    Then it will immediately delete it from the organization database.
+    Finally, it will add that index to the indexes array of the query in the B+ database.
+    """
+
+    # Fetch the query from B+ DB
+    query = db_b_plus.query(TCQuery).filter(TCQuery.id == request.query_id).first()
+    if not query:
+        raise HTTPException(status_code=404, detail="Query not found")
+
+    index_statement = request.index.strip().rstrip(";")  # Ensure no trailing semicolon
+
+    try:
+        # Extract the index name (assuming index creation is like "CREATE INDEX idx_name ON ...")
+        tokens = index_statement.split()
+        if len(tokens) < 3 or tokens[0].upper() != "CREATE" or tokens[1].upper() != "INDEX":
+            raise HTTPException(status_code=400, detail="Invalid index statement format")
+        index_name = tokens[2]
+
+        # Try creating the index in org database
+        db_org.execute(text(index_statement))
+        db_org.commit()
+
+        # Drop the index immediately
+        db_org.execute(text(f"DROP INDEX IF EXISTS {index_name}"))
+        db_org.commit()
+
+    except Exception as e:
+        db_org.rollback()
+        raise HTTPException(status_code=400, detail=f"Invalid index statement: {str(e)}")
+
+    # Add the index to B+ database indexes array
+    if request.index not in query.indexes:
+        query.indexes = query.indexes + [request.index]
+        db_b_plus.commit()
+    else:
+        raise HTTPException(status_code=400, detail="Index already exists in query")
+
+    return {"detail": "Index validated and added successfully"}
 
