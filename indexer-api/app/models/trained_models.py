@@ -6,7 +6,7 @@ class TrainedModel(Base):
     __tablename__ = "trained_models"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tc_query_id = Column(Integer, ForeignKey("tc_queries.id"), nullable=False)
+    tc_query_id = Column(Integer, ForeignKey("tc_queries.id", ondelete="CASCADE"), nullable=False)
     number_of_hidden_layers = Column(Integer, nullable=False)
     number_of_neurons_per_layer = Column(Integer, nullable=False)
     early_stopping_patience = Column(Integer, nullable=False)

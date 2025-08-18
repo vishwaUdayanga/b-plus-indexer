@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import health_check_routes, dba_routes, diagnostics_routes, statistics_routes, model_trainer_routes, adim_routes, hits_routes, workload_simulator_routes
+from app.routes import health_check_routes, dba_routes, diagnostics_routes, statistics_routes, model_trainer_routes, adim_routes, hits_routes, workload_simulator_routes, manual_labor_routes
 from app.database.base import Base
 from app.database.session import b_plus_engine
 from app.models import tc_query, query_log, trained_models, index_maintenance_log
@@ -51,3 +51,7 @@ app.include_router(hits_routes.router)
 
 # Include the workload simulator routes
 app.include_router(workload_simulator_routes.router)
+
+
+# Include the manual labor routes
+app.include_router(manual_labor_routes.router)

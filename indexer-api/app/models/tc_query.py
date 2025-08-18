@@ -19,13 +19,11 @@ class TCQuery(Base):
     auto_indexing = Column(Boolean, default=False)
 
     # Defining the relationship with QueryLog
-    query_logs = relationship("QueryLog", back_populates="tc_query")
+    query_logs = relationship("QueryLog", back_populates="tc_query", cascade="all, delete-orphan")
 
     # Defining the relationship with TrainedModel
-    trained_models = relationship("TrainedModel", back_populates="tc_query")
+    trained_models = relationship("TrainedModel", back_populates="tc_query", cascade="all, delete-orphan")
 
     # Defining the relationship with IndexMaintenanceLog
-    index_maintenance_logs = relationship("IndexMaintenanceLog", back_populates="tc_query")
-
-
+    index_maintenance_logs = relationship("IndexMaintenanceLog", back_populates="tc_query", cascade="all, delete-orphan")
 
