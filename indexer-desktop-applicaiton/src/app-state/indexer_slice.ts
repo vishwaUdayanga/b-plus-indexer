@@ -39,9 +39,17 @@ export const indexerSlice = createSlice({
         addQuery: (state, action: PayloadAction<TimeConsumingQueries>) => {
             state.queries.push(action.payload);
         },
+
+        updateQuery: (state, action: PayloadAction<TimeConsumingQueries>) => {
+            const index = state.queries.findIndex(q => q.id === action.payload.id);
+            if (index !== -1) {
+                state.queries[index] = action.payload;
+            }
+        },
+
     },
 });
 
-export const { setDba, clearDba, setQueries, clearQueries, addQuery } = indexerSlice.actions;
+export const { setDba, clearDba, setQueries, clearQueries, addQuery, updateQuery } = indexerSlice.actions;
 
 export default indexerSlice.reducer;

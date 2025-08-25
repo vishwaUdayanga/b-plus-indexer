@@ -99,8 +99,8 @@ export default function TableWithOptions({ data }: { data: TimeConsumingQueriesR
                                 <p className="text-sm text-[#454545]"><strong>Shared block read:</strong> {currentQuery?.shared_blks_read}</p>
                                 <p className="text-sm text-[#454545]"><strong>Temp block written:</strong> {currentQuery?.temp_blks_written}</p>
                                 <p className="text-sm text-[#454545]"><strong>Estimated time for indexes:</strong> {currentQuery?.estimated_time_for_indexes} ms</p>
-                                <p className="text-sm text-[#454545]"><strong>Auto indexing:</strong> {currentQuery?.auto_indexing || `None`}</p>
-                                <p className="text-sm text-[#454545]"><strong>Next time execution:</strong> {currentQuery?.next_time_execution || `None`}</p>
+                                <p className="text-sm text-[#454545]"><strong>Auto indexing:</strong> {currentQuery?.auto_indexing !== undefined ? String(currentQuery.auto_indexing) : "None"}</p>
+                                <p className="text-sm text-[#454545]"><strong>Next time execution:</strong> {currentQuery?.next_time_execution !== undefined ? String(currentQuery.next_time_execution) : "None"}</p>
                             </div>
                         </div>
                     </div>
