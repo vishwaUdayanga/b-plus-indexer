@@ -3,24 +3,33 @@
 import { TimeConsumingQueries } from "@/types/redux/states"
 import clsx from "clsx"
 import { useEffect, useState } from "react"
-import { changeAutoIndexRequest, indexStatus, removeIndexRequest } from "@/api-calls/manual-labor/manual-labor.type"
-import { changeAutoIndex, getIndexStatus, materializeIndexes, deMaterializeIndexes, removeIndex } from "@/api-calls/manual-labor/manual-labor"
+import { changeAutoIndexRequest, indexStatus, removeIndexRequest, addIndexRequest } from "@/api-calls/manual-labor/manual-labor.type"
+import { changeAutoIndex, getIndexStatus, materializeIndexes, deMaterializeIndexes, removeIndex, addIndex, deleteTCQuery } from "@/api-calls/manual-labor/manual-labor"
 import MessageBox from "@/components/medium/message-box/message-box"
 import MessageBoxContent from "@/components/mini/message-box-content/message-box-content";
 import Button from "@/components/mini/buttons/form-buttons/button"
 import { RootState } from "@/app/store";
 import { useSelector, useDispatch } from "react-redux";
-import { updateQuery } from "@/app-state/indexer_slice"
+import { updateQuery, removeQuery } from "@/app-state/indexer_slice"
 import Image from "next/image"
+import { CreateIndexRequestSchema } from './../../../schemas/zod/create-index';
+import Input from "@/components/mini/form-inputs/input"
+import { useRouter } from "next/navigation"
 
 export default function ManualConfiguration({props}: {props: TimeConsumingQueries | undefined}) {
     const [showMessageToChangeAutoIndexing, setShowMessageToChangeAutoIndexing] = useState(false);
     const [showMessageToCreateIndexes, setShowMessageToCreateIndexes] = useState(false);
     const [showMessageToRemoveIndexes, setShowMessageToRemoveIndexes] = useState(false);
+    const [showMessageToAddIndex, setShowMessageToAddIndex] = useState(false);
+    const [showMessageToDeleteTCQuery, setShowMessageToDeleteTCQuery] = useState(false);
 
     const [indexStatus, setIndexStatus] = useState<indexStatus[] | undefined>(undefined);
     const [currentIndexToDelete, setCurrentIndexToDelete] = useState<string | undefined>(undefined);
+    const [indexCommand, setIndexCommand] = useState("");
+    const [error, setError] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
+
+    const router = useRouter();
 
 
     // Redux data
@@ -37,7 +46,7 @@ export default function ManualConfiguration({props}: {props: TimeConsumingQuerie
         };
 
         fetchIndexStatus();
-    }, [props, accessToken, showMessageToCreateIndexes, showMessageToRemoveIndexes, currentIndexToDelete]);
+    }, [props, accessToken, showMessageToCreateIndexes, showMessageToRemoveIndexes, currentIndexToDelete, showMessageToAddIndex]);
 
     // Handle the change auto indexing request
     const handleChangeAutoIndex = async () => {
@@ -138,6 +147,71 @@ export default function ManualConfiguration({props}: {props: TimeConsumingQuerie
             setCurrentIndexToDelete(undefined);
         } catch (error) {
             console.error("Error removing index:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle add index
+    const handleAddIndex = async () => {
+        if (!props) return;
+
+        setLoading(true);
+
+        const commandToValidate = {
+            index_command: indexCommand || ""
+        }
+
+        // Validate the command
+        const validatedResult = CreateIndexRequestSchema.safeParse(commandToValidate);
+        if (!validatedResult.success) {
+            const errors = validatedResult.error.flatten().fieldErrors;
+            if (errors.index_command) {
+                setError(errors.index_command[0]);
+            } else {
+                setError("Validation error. Please check your input.");
+            }
+            setLoading(false);
+            return;
+        }
+
+        const request: addIndexRequest = {
+            query_id: props.id,
+            index: indexCommand
+        };
+
+        try {
+            await addIndex({data: request, access_token: accessToken});
+            // Add the index to the redux store
+            const updatedQuery = {
+                ...props,
+                indexes: [...props.indexes, indexCommand]
+            };
+            dispatch(updateQuery(updatedQuery));
+            setIndexCommand("");
+            setShowMessageToAddIndex(false);
+        } catch (error) {
+            console.error("Error adding index:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Handle delete TC query
+    const handleDeleteTCQuery = async () => {
+        if (!props) return;
+
+        setLoading(true);
+
+        try {
+            await deleteTCQuery({query_id: String(props.id), access_token: accessToken});
+            // Remove the query from the redux store
+            dispatch(removeQuery(props.id));
+            setShowMessageToDeleteTCQuery(false);
+            // Redirect to the query page
+            router.push(`/dashboard/manual-labor`);
+        } catch (error) {
+            console.error("Error deleting TC query:", error);
         } finally {
             setLoading(false);
         }
@@ -263,10 +337,76 @@ export default function ManualConfiguration({props}: {props: TimeConsumingQuerie
         );
     }
 
+    if (showMessageToAddIndex) {
+        return (
+            <MessageBox
+                messageBoxProps={{
+                    visible: true,
+                    onClose: () => setShowMessageToAddIndex(false)
+                }}
+            >
+                <MessageBoxContent
+                    messageBoxContent={{
+                        title: "Add Index",
+                        type: "info",
+                        icon: "info",
+                        onCancel: () => setShowMessageToAddIndex(false)
+                    }}
+                >
+                    <Input
+                        placeholder="Create Index Name"
+                        type="text"
+                        value={indexCommand}
+                        onChange={(e) => setIndexCommand(e.target.value)}
+                        error={error}
+                    />
+                    
+                    <Button
+                        text="Create"
+                        loading={loading}
+                        disabled={loading}
+                        buttonType="submit"
+                        onClick={handleAddIndex}
+                    />
+                </MessageBoxContent>
+            </MessageBox>
+        );
+    }
+
+    if (showMessageToDeleteTCQuery) {
+        return (
+            <MessageBox
+                messageBoxProps={{
+                    visible: true,
+                    onClose: () => setShowMessageToDeleteTCQuery(false)
+                }}
+            >
+                <MessageBoxContent
+                    messageBoxContent={{
+                        title: "Delete Query",
+                        type: "error",
+                        icon: "info",
+                        onCancel: () => setShowMessageToDeleteTCQuery(false)
+                    }}
+                >
+                    <p className="text-sm w-11/12">Are you sure you want to delete this query?</p>
+
+                    <Button
+                        text="Delete"
+                        loading={loading}
+                        disabled={loading}
+                        buttonType="logout"
+                        onClick={handleDeleteTCQuery}
+                    />
+                </MessageBoxContent>
+            </MessageBox>
+        );
+    }
+
     return (
-        <div className="w-full h-full flex flex-col overflow-hidden">
+        <div className="w-full h-full flex flex-col overflow-auto">
             <h1 className="text-xl font-bold ml-2">Manual Configuration</h1>
-            <div className="flex w-full h-full p-2 gap-4 overflow-hidden">
+            <div className="flex w-full h-full p-2 gap-4 overflow-auto">
                 <div className="bg-white rounded p-4 w-4/5 h-fit">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold">Query Details</h2>
@@ -323,6 +463,58 @@ export default function ManualConfiguration({props}: {props: TimeConsumingQuerie
                                 </div>
                             )
                             }
+                    </div>
+                    <div className="mt-2">
+                        <h2 className="font-bold">Other Statistics</h2>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Total execution time</p>
+                            <p className="text-sm text-[#00897A]">{props?.total_exec_time}</p>
+                        </div>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Mean execution time</p>
+                            <p className="text-sm text-[#00897A]">{props?.mean_exec_time}</p>
+                        </div>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Number of calls</p>
+                            <p className="text-sm text-[#00897A]">{props?.calls}</p>
+                        </div>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Temporary blocks written</p>
+                            <p className="text-sm text-[#00897A]">{props?.temp_blks_written}</p>
+                        </div>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Shared blocks read</p>
+                            <p className="text-sm text-[#00897A]">{props?.shared_blks_read}</p>
+                        </div>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Score</p>
+                            <p className="text-sm text-[#00897A]">{props?.score}</p>
+                        </div>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Estimated time for indexes</p>
+                            <p className="text-sm text-[#00897A]">{props?.estimated_time_for_indexes}</p>
+                        </div>
+                        <div className="w-full flex justify-between items-center mt-2">
+                            <p className="text-sm">Next time execution</p>
+                            <p className="text-sm text-[#00897A]">{props?.next_time_execution}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                        <div className="w-40">
+                            <Button
+                                text="Delete Query"
+                                buttonType="logout"
+                                onClick={() => setShowMessageToDeleteTCQuery(true)}
+                            />
+                        </div>
+                        <div className="w-40">
+                            <Button
+                                text="Add Index"
+                                buttonType="submit"
+                                onClick={() => setShowMessageToAddIndex(true)}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

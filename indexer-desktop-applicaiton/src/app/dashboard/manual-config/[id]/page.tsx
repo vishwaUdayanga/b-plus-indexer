@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import React from "react";
 import { RootState } from "@/app/store";
 import { useSelector } from "react-redux";
@@ -8,8 +8,6 @@ import { useRouter, useParams } from "next/navigation";
 import ManualConfiguration from "@/components/large/manual-configuration/manual-configuration";
 
 export default function Page() {
-    const [isLoading, setIsLoading] = useState(true);
-
     const router = useRouter();
     const { id } = useParams();
 
