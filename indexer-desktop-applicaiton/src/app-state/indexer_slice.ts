@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice,  PayloadAction } from '@reduxjs/toolkit';
 import { AccessToken, TimeConsumingQueries } from '@/types/redux/states';
 
 interface InitialState {
@@ -35,9 +35,13 @@ export const indexerSlice = createSlice({
         clearQueries: (state) => {
             state.queries = [];
         },
+
+        addQuery: (state, action: PayloadAction<TimeConsumingQueries>) => {
+            state.queries.push(action.payload);
+        },
     },
 });
 
-export const { setDba, clearDba, setQueries, clearQueries } = indexerSlice.actions;
+export const { setDba, clearDba, setQueries, clearQueries, addQuery } = indexerSlice.actions;
 
 export default indexerSlice.reducer;
