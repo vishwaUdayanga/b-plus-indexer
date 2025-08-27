@@ -45,7 +45,7 @@ const SideBar:FC = () => {
         dispatch(clearDba());
 
         //Redirect to the login page
-        router.push("/login");
+        router.push("/");
     }
 
     return (

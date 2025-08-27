@@ -17,14 +17,24 @@ const Page: FC = () => {
 
     // Get the time consuming queries from the Redux store and set the empty message if the array is empty
     const queries = useSelector((state: RootState) => state.indexer.queries);
+    const searchQuery = useSelector((state: RootState) => state.indexer.search);
+    
     useEffect(() => {
-        if (queries.length === 0) {
+        let filtered = queries;
+
+        if (searchQuery.trim() !== "") {
+            filtered = queries.filter((q) =>
+                q.query.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        if (filtered.length === 0) {
             setEmptyMessage(true);
         } else {
-            setTimeConsumingQueries(queries);
+            setTimeConsumingQueries(filtered);
             setEmptyMessage(false);
         }
-    }, [queries]);
+    }, [queries, searchQuery]);
 
     // Render the empty message using the TabMessageBox component
     if (emptyMessage) {
