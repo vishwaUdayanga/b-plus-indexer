@@ -21,8 +21,8 @@ export const SideBarTrainList = [
 
 export const SideBarManualList = [
     {
-        title: 'Manual configuration',
+        title: 'Manual Labor',
         icon: 'manual',
-        link: '/dashboard/manual'
+        link: '/dashboard/manual-labor'
     },
 ]

@@ -36,7 +36,16 @@ const createWindow = () => {
     },
   });
 
-  mainWindow.on("ready-to-show", () => mainWindow.show());
+  // mainWindow.on("ready-to-show", () => mainWindow.show());
+
+  // Remove this after dev and uncomment the above
+  mainWindow.on("ready-to-show", () => {
+    mainWindow.show();
+
+    if (is.dev) {
+      mainWindow.webContents.openDevTools({ mode: "detach" }); // opens Chrome DevTools
+    }
+  });
 
   // Remove menu bar
   mainWindow.removeMenu();

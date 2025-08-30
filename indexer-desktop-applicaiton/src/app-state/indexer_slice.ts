@@ -1,9 +1,10 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice,  PayloadAction } from '@reduxjs/toolkit';
 import { AccessToken, TimeConsumingQueries } from '@/types/redux/states';
 
 interface InitialState {
     dba: AccessToken,
     queries: TimeConsumingQueries[];
+    search: string;
 }
 
 const initialState: InitialState = {
@@ -15,6 +16,7 @@ const initialState: InitialState = {
         scope: '',
     },
     queries: [],
+    search: '',
 };
 
 export const indexerSlice = createSlice({
@@ -35,9 +37,32 @@ export const indexerSlice = createSlice({
         clearQueries: (state) => {
             state.queries = [];
         },
+
+        addQuery: (state, action: PayloadAction<TimeConsumingQueries>) => {
+            state.queries.push(action.payload);
+        },
+
+        updateQuery: (state, action: PayloadAction<TimeConsumingQueries>) => {
+            const index = state.queries.findIndex(q => q.id === action.payload.id);
+            if (index !== -1) {
+                state.queries[index] = action.payload;
+            }
+        },
+
+        removeQuery: (state, action: PayloadAction<number>) => {
+            state.queries = state.queries.filter(q => q.id !== action.payload);
+        },
+
+        setSearch: (state, action: PayloadAction<string>) => {
+            state.search = action.payload;
+        },
+        clearSearch: (state) => {
+            state.search = "";
+        },
+
     },
 });
 
-export const { setDba, clearDba, setQueries, clearQueries } = indexerSlice.actions;
+export const { setDba, clearDba, setQueries, clearQueries, addQuery, updateQuery, removeQuery, setSearch, clearSearch } = indexerSlice.actions;
 
 export default indexerSlice.reducer;

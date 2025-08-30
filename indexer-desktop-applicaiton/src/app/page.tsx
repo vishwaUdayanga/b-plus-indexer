@@ -36,7 +36,8 @@ export default function APIPrompt() {
 
         const response = await healthCheckWithDBs({ healthCheckRequest });
         if (response.success) {
-          router.push('/login');
+          //Set the base URL state
+          setBaseUrlState(url);
         }
         setLoading(false);
       }
